@@ -1,0 +1,5 @@
+interface:
+  display_name: "More News Briefing"
+  version: "0.1.1"
+  short_description: "Configurable multi-topic news digest"
+  default_prompt: "Use $more-news-briefing to resolve the briefing contract first, then collect, rank, summarize, and prepare a source-backed news digest across AI, politics, culture, sports, finance, and custom topics. State inferred assumptions when the request is underspecified."

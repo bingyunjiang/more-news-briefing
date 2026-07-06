@@ -1,0 +1,369 @@
+---
+name: more-news-briefing
+version: 0.1.1
+description: Create recurring multi-topic news briefings with customizable cadence, topic mix, ranking, and source-backed summaries. Use when Codex needs to collect, deduplicate, rank, summarize, and prepare daily, weekly, or custom-cycle digests across general news, AI, politics, business, culture, sports, and user-defined subjects. This skill should work as a standalone workflow by default, and only treat other installed skills as optional enhancements.
+---
+
+# More News Briefing
+
+## Overview
+
+Build a recurring news digest with an internal workflow for collection, filtering, ranking, summarization, and formatting. Default to a broad briefing that covers major general-interest topics plus any user-priority themes, then adapt the scope, cadence, and output format to the request.
+
+## Default Operating Mode
+
+If the user does not specify a cadence, ask only if scheduling is the main task. Otherwise assume a one-off run that is compatible with future automation.
+
+Before collecting, normalize the request with the input contract in [input-contract.md](./references/input-contract.md). If the user gives a loose request like "做个今日简报", fill the missing fields with defaults and state those assumptions in the final output.
+
+If the user does not specify topics, use this default mix:
+
+1. AI and technology
+2. Politics and policy
+3. Business and markets
+4. Culture and society
+5. Sports
+6. User-priority specialty topics
+
+If the user does not specify depth, produce a compact briefing:
+
+1. One top-line summary
+2. Five to twelve ranked items total
+3. One or two sentences per item
+4. A short "why it matters" note for the highest-priority items
+
+## Capability Modes
+
+Run this skill in one of three modes:
+
+1. `full mode`: Use available enhancement skills for better retrieval, validation, or polish
+2. `standard mode`: Use only Codex's native retrieval and reasoning abilities
+3. `minimal mode`: If retrieval is constrained, reorganize supplied material into a ranked, source-backed briefing
+
+Default to `standard mode` unless the environment clearly supports a stronger path.
+
+## Standalone Operation
+
+This skill must be able to complete its core job without relying on any external skill.
+
+When external skills are unavailable, use this standalone route:
+
+1. Build queries from [query-playbook.md](./references/query-playbook.md)
+2. Use native web retrieval or user-provided sources
+3. Apply the built-in ranking, deduplication, verification, and formatting rules
+4. Produce a source-backed digest with the internal templates
+
+Treat external skills as accelerators, not prerequisites.
+
+When you need concrete retrieval routes instead of generic guidance, read [retrieval-adapters.md](./references/retrieval-adapters.md).
+
+When the preferred retrieval route is `anysearch`, read [anysearch-adapter-runbook.md](./references/anysearch-adapter-runbook.md) for a directly executable first-pass collection workflow.
+
+## Internal Enhancement Patterns
+
+This skill internally adopts four enhancement patterns. Use them whether or not the original source skills are installed:
+
+1. `recent-scan pattern`: start with a short-horizon sweep for the last 24 hours to 7 days and identify what is actually new
+2. `broad-search pattern`: widen coverage with multiple keyword variants, domain mixes, and topic buckets before ranking
+3. `deep-verify pattern`: give high-impact or ambiguous items a second pass with fuller reading and cross-checking
+4. `final-polish pattern`: compress, de-slop, and humanize the prose after the factual structure is stable
+
+Read [embedded-enhancements.md](./references/embedded-enhancements.md) before difficult collection or synthesis tasks.
+
+## External Skill Bridges
+
+If these skills are installed, they can accelerate the internal patterns above:
+
+1. `anysearch` can accelerate the `broad-search pattern`, especially for multi-query recall and page extraction
+2. `deep-research` can accelerate the `deep-verify pattern`
+3. `humanizer-zh` can accelerate the `final-polish pattern`
+4. `automation-workflows` is only relevant when the task explicitly includes scheduling or delivery
+5. Topic-specific retrieval skills can be used for specialty buckets if they are narrowly scoped and their evidence quality is checked before retention
+
+Do not assume these skills exist. If one is unavailable, continue with the built-in pattern that serves the same purpose.
+
+Do not use `agent-reach` as the primary news collector. It can help find other agents, but it is not the main retrieval path for current affairs.
+
+Do not use `Last30Days` for current-affairs retrieval. Despite the name, it is a coding-activity skill, not a news-recentness skill.
+
+## Fallback Behavior
+
+If an enhancement skill is unavailable, degrade gracefully:
+
+1. Missing `anysearch`: use the best available web retrieval path and narrower topic queries
+2. Missing `deep-research`: increase source cross-checking on the retained top items
+3. Missing `humanizer-zh`: keep the draft concise and factual instead of adding stylistic polish
+4. Missing a topic-specific retrieval skill: search that specialty bucket directly with the built-in query playbook
+5. Missing all enhancement skills: still produce a source-backed digest from the best available retrieval path
+
+If the user provides source material directly, skip search-heavy steps and focus on ranking, deduplication, and formatting.
+
+Read [standalone-operation.md](./references/standalone-operation.md) when you need a no-external-skill path, including user-assisted login to account-gated or institution-gated sources.
+
+## Workflow
+
+## Quick Start
+
+Use this sequence when you need a runnable path instead of a general description:
+
+1. Normalize the request with [input-contract.md](./references/input-contract.md)
+2. Follow the operator steps in [demo-runbook.md](./references/demo-runbook.md)
+3. Pick the retrieval route in [retrieval-adapters.md](./references/retrieval-adapters.md)
+4. If the route is `anysearch`, run [anysearch-adapter-runbook.md](./references/anysearch-adapter-runbook.md)
+5. Format the digest with [output-templates.md](./references/output-templates.md)
+6. Check completion with [acceptance-checklist.md](./references/acceptance-checklist.md)
+
+### 1. Define the briefing contract
+
+Lock down four variables before collecting:
+
+1. Cadence: one-off, daily, weekly, or custom
+2. Topic mix: default mix or user-specified weights
+3. Delivery format: plain digest, push-ready summary, or archive-friendly report
+4. Audience: personal skim, executive scan, research watchlist, or public-facing copy
+
+If one or more variables are missing, make the smallest reasonable assumption and state it in the final output.
+
+Use the `minimum viable contract` in [input-contract.md](./references/input-contract.md) when you need to move quickly.
+
+### 2. Collect candidate items
+
+Collect more items than you plan to keep. Build a candidate pool by topic bucket, then merge.
+
+Prefer a mixed source set:
+
+1. Broad news sources for major events
+2. Topic-specialized sources for depth
+3. Official or primary sources when policy, regulation, or company announcements matter
+
+If enhancement skills are available, use them to widen or verify the pool. If they are not, continue with direct retrieval and manual filtering. A briefing is not a dump of search results.
+
+Apply the `recent-scan pattern` first, then the `broad-search pattern`, before deciding whether a `deep-verify pattern` pass is needed.
+
+Read [query-playbook.md](./references/query-playbook.md) before building queries for broad news sweeps, niche technology monitoring, or mixed Chinese-English search workflows.
+
+Read [source-ladder.md](./references/source-ladder.md) before deciding whether a source is strong enough to support a retained item.
+
+### 3. Deduplicate and rank
+
+Merge duplicate stories across sources before writing. Keep one canonical item with supporting sources rather than listing the same event multiple times.
+
+Rank items with this priority order:
+
+1. Consequence: policy, market, safety, geopolitical, platform, or cultural impact
+2. Recency: newer items win when importance is similar
+3. Attention: visible breakout coverage across credible sources
+4. Relevance: explicit user interests or persistent watch topics
+5. Novelty: genuine change beats routine commentary
+
+Read [editorial-rubric.md](./references/editorial-rubric.md) before final ranking or when the topic mix is broad.
+
+Read [source-ladder.md](./references/source-ladder.md) when a story is fast-moving, contested, technical, or financially material.
+
+### 4. Write the digest
+
+Write in layers, not as one flat list:
+
+1. Headline summary: two to four sentences covering the biggest shifts
+2. Ranked items: one short block per item
+3. Optional watchlist: low-confidence or emerging stories worth checking next run
+
+For each retained item, include:
+
+1. A clear title
+2. What happened
+3. Why it matters
+4. A timestamp or time window when relevant
+5. One or more sources if the user asked for links or attribution
+
+Avoid filler transitions, generic optimism, and repetitive framing.
+
+### 5. Prepare for push or repeat runs
+
+If the task includes ongoing delivery and scheduling support is available, hand off the final structure to `automation-workflows`.
+
+If scheduling support is unavailable, still produce a reusable digest format that another system can trigger later.
+
+Store the workflow assumptions in the automation:
+
+1. Cadence and trigger time
+2. Topic mix
+3. Depth target
+4. Delivery channel
+5. Maximum item count
+6. Whether links, source notes, or a "watch next" section should be included
+
+## Output Modes
+
+Choose one of these patterns unless the user specifies another:
+
+### Quick Brief
+
+Use for mobile-friendly push summaries:
+
+1. One short lead
+2. Three to seven items
+3. Minimal commentary
+
+### Standard Digest
+
+Use for daily or weekly roundup work:
+
+1. One top-line overview
+2. Five to twelve ranked items
+3. Brief importance notes
+
+### Analyst Watch
+
+Use for research-heavy monitoring:
+
+1. Topic-grouped sections
+2. Explicit source comparison
+3. Open questions and items to revisit next cycle
+
+### Long Message Briefing
+
+Use for WeChat, Feishu, or other chat surfaces where the digest should stay readable as one long message:
+
+1. One concise title line
+2. One short overview block
+3. Three to six compact sections
+4. Short paragraphs and list-like rhythm
+5. No dense wall-of-text sections
+6. Default to the high-density variant unless the user asks for a more executive style
+
+## Output Format Rules
+
+Treat formatting as part of the deliverable, not decoration. Keep the structure stable across runs so the digest is easy to scan and easy to automate later.
+
+### Global formatting rules
+
+1. Start with the briefing date or time window
+2. Put the highest-value summary first
+3. Keep section titles short and consistent
+4. Keep each news item in the same field order
+5. Avoid long paragraphs; prefer compact blocks
+6. Include source lines by default to preserve an evidence trail
+7. Prefer mobile-friendly line lengths for chat delivery
+
+### Required field order for each item
+
+Unless the user asks for a lighter format, write each retained item in this order:
+
+1. Title
+2. What happened
+3. Why it matters
+4. Signal level or priority tag when useful
+5. Source level or evidence status when the digest is source-backed
+6. Sources or source count
+
+### Chinese default style
+
+Default to concise Chinese output with this tone:
+
+1. Calm and information-dense
+2. No marketing language
+3. No exaggerated transitions
+4. No fake objectivity language such as "业内人士表示" unless sourced
+5. No filler ending paragraphs
+
+### Section order
+
+For a broad digest, use this section order unless the user overrides it:
+
+1. 今日概览
+2. 重点新闻
+3. 分主题速览
+4. 值得继续跟踪
+
+If the digest is short, collapse "分主题速览" into "重点新闻".
+
+### Preferred labels
+
+Use these labels for Chinese briefings:
+
+1. `今日概览`
+2. `重点新闻`
+3. `AI与科技`
+4. `政治与政策`
+5. `商业与市场`
+6. `文化与社会`
+7. `体育`
+8. `专项关注`
+9. `继续跟踪`
+
+### Length targets
+
+Use these defaults unless the user requests a different depth:
+
+1. Overview: 2 to 4 sentences
+2. Each ranked item: 2 to 5 lines
+3. Each "why it matters" note: 1 short sentence
+4. Each watchlist item: 1 line
+
+### Long message rules
+
+When writing for WeChat or Feishu long messages:
+
+1. Keep each section to 2 to 4 items where possible
+2. Keep each item to 3 short lines unless it is a top story
+3. Avoid more than one dense explanatory paragraph in a row
+4. Use visible section spacing so the reader can resume scanning after interruption
+5. Put the most important stories before any topic-by-topic sweep
+6. End with a short `继续跟踪` section instead of a long conclusion
+7. Default to `信息密度高版`
+8. Keep a source line on every retained top item unless the user explicitly requests a source-free executive style
+9. Default to compact `来源级别` and `证据状态` labels on retained top items when evidence traceability matters
+
+### Output examples
+
+Read [output-templates.md](./references/output-templates.md) before drafting the final answer when the user asks for a fixed newsletter style, a chat-ready summary, or a reusable standard layout.
+
+## Topic Expansion Rules
+
+If the user asks for "comprehensive" coverage, expand breadth before depth. Add buckets in this order:
+
+1. International affairs
+2. China and domestic policy
+3. AI and technology
+4. Business and markets
+5. Culture and society
+6. Sports
+7. Specialty topics named by the user
+
+If the digest becomes too long, cut routine items first, then commentary, then low-impact repetition. Keep the top developments.
+
+## Quality Bar
+
+Before finishing, check that the digest:
+
+1. Covers the requested or default topic mix
+2. Avoids duplicate stories
+3. Distinguishes important events from noisy chatter
+4. Reads like a briefing, not search notes
+5. Uses source strength labels consistently when the digest is source-backed
+6. Can be reused by an external scheduler or automation layer without manual restructuring
+
+Read [acceptance-checklist.md](./references/acceptance-checklist.md) before delivering the final answer when you want a pass/fail check rather than a loose quality scan.
+
+## References
+
+Read [editorial-rubric.md](./references/editorial-rubric.md) when you need the ranking rubric and source-balance rules.
+
+Read [output-templates.md](./references/output-templates.md) when you need reusable Chinese output formats for short briefs, standard digests, analyst-style monitoring notes, or WeChat/Feishu long-message layouts.
+
+Read [input-contract.md](./references/input-contract.md) when the user request is underspecified and you need a repeatable way to set assumptions before retrieval.
+
+Read [embedded-enhancements.md](./references/embedded-enhancements.md) when you want the built-in equivalents of search expansion, deep verification, and humanization patterns that originally came from external skills.
+
+Read [demo-runbook.md](./references/demo-runbook.md) when you want a concrete one-off execution path, including a default sample run and stop conditions.
+
+Read [retrieval-adapters.md](./references/retrieval-adapters.md) when you want to borrow retrieval capability from other skills without making them hard dependencies.
+
+Read [anysearch-adapter-runbook.md](./references/anysearch-adapter-runbook.md) when you want a concrete `anysearch`-based first-pass retrieval workflow for broad multi-bucket briefings.
+
+Read [query-playbook.md](./references/query-playbook.md) when you need default search query templates across AI, politics, business, entertainment, film and TV, academia, energy storage, charging, embodied intelligence, and other high-tech topics.
+
+Read [standalone-operation.md](./references/standalone-operation.md) when you need to complete the workflow without relying on any external skill and may need user-assisted access to account-gated or institution-gated materials.
+
+Read [source-ladder.md](./references/source-ladder.md) when you need a domain-specific trust order for official sources, direct reporting, databases, platforms, commentators, and rumor-sensitive material.
