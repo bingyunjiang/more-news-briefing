@@ -23,8 +23,6 @@ English entry: [Jump to English Overview](#english-overview)
 
 ## 中文说明
 
-English link: [Jump to English Overview](#english-overview)
-
 `more-news-briefing` 是一个独立可运行的新闻简报 skill，用于把分散的时事信息整理成结构稳定、可追溯来源、适合直接交付的多主题资讯摘要。它覆盖从需求归一化、候选信息收集、去重、排序，到最终格式化输出的完整链路，适合一次性简报，也适合持续性日报、周报和专题监测。
 
 ### 你为什么会愿意持续用它

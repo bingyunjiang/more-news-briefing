@@ -30,6 +30,16 @@ DEFAULT_SOURCE_ROLES = ["discovery", "verification"]
 SPECIALTY_SOURCE_ROLES = ["discovery", "verification", "context", "watch"]
 DEFAULT_TOPICS = ["AI与科技", "政治与政策", "商业与市场", "文化与社会", "体育"]
 DEFAULT_COUNT_TARGETS = {"quick": 5, "standard": 8, "analyst": 8}
+VERIFICATION_RESULT_REQUIRED_FIELDS = ["title", "verdict"]
+VERIFICATION_RESULT_OPTIONAL_FIELDS = [
+    "claim",
+    "why",
+    "source_level",
+    "evidence_status",
+    "sources",
+    "need_confirm",
+    "follow_up",
+]
 FORMAT_ALIASES = {
     "quick_brief": "quick_brief",
     "short_brief": "quick_brief",
@@ -126,6 +136,12 @@ QUERY_LIBRARY = {
         ],
         "community": [],
     },
+}
+
+DEFAULT_ANySEARCH_MAX_RESULTS = {
+    "quick": 3,
+    "standard": 5,
+    "analyst": 6,
 }
 
 
@@ -440,6 +456,554 @@ def build_route_recommendation(contract: Contract) -> dict[str, Any]:
     }
 
 
+def map_time_window_to_freshness(time_window: str) -> str:
+    mapping = {
+        "today": "day",
+        "last_24h": "day",
+        "last_3d": "week",
+        "last_7d": "week",
+    }
+    return mapping.get(time_window, "week")
+
+
+def choose_collect_query(groups: dict[str, list[str]]) -> str:
+    for key in ("news", "core", "institutional", "community"):
+        values = groups.get(key, [])
+        if values:
+            return values[0]
+    return ""
+
+
+def build_anysearch_batches(contract: Contract) -> list[dict[str, Any]]:
+    grouped_queries = build_queries(contract, grouped=True)
+    batch_topics = [
+        ("Batch A", ["AI与科技", "政治与政策", "商业与市场"]),
+        ("Batch B", ["文化与社会", "体育", "专项关注"]),
+    ]
+    freshness = map_time_window_to_freshness(contract.time_window)
+    max_results = DEFAULT_ANySEARCH_MAX_RESULTS.get(contract.depth, 5)
+    batches: list[dict[str, Any]] = []
+    anysearch_script = REPO_ROOT / "references" / "skills" / "anysearch" / "scripts" / "anysearch_cli.py"
+
+    for batch_name, topics in batch_topics:
+        query_objects: list[dict[str, Any]] = []
+        for topic in topics:
+            groups = grouped_queries.get(topic)
+            if not groups:
+                continue
+            query = choose_collect_query(groups)
+            if not query:
+                continue
+            query_objects.append(
+                {
+                    "topic": topic,
+                    "query": query,
+                    "content_types": "news",
+                    "freshness": freshness,
+                    "max_results": max_results,
+                }
+            )
+        if not query_objects:
+            continue
+        compact_payload = [
+            {
+                "query": item["query"],
+                "content_types": item["content_types"],
+                "freshness": item["freshness"],
+                "max_results": item["max_results"],
+            }
+            for item in query_objects
+        ]
+        batches.append(
+            {
+                "batch_name": batch_name,
+                "topics": [item["topic"] for item in query_objects],
+                "query_objects": query_objects,
+                "payload": compact_payload,
+                "command_hint": (
+                    f"python3 {anysearch_script} batch_search --queries "
+                    f"'{json.dumps(compact_payload, ensure_ascii=False)}'"
+                ),
+            }
+        )
+    return batches
+
+
+def build_collect_execution_plan(contract: Contract) -> dict[str, Any]:
+    route = build_route_recommendation(contract)
+    collect_step = next(step for step in route["route_steps"] if step["name"] == "collect")
+    grouped_queries = build_queries(contract, grouped=True)
+    plan = {
+        "recommended_adapter": collect_step["recommended_adapter"],
+        "reason": collect_step["reason"],
+        "freshness": map_time_window_to_freshness(contract.time_window),
+        "grouped_queries": grouped_queries,
+        "fallback_web_queries": {
+            topic: choose_collect_query(groups) for topic, groups in grouped_queries.items()
+        },
+    }
+    if collect_step["recommended_adapter"] == "vendored_anysearch":
+        plan["execution_mode"] = "anysearch_batch_search"
+        plan["anysearch_batches"] = build_anysearch_batches(contract)
+    else:
+        plan["execution_mode"] = "native_web_search"
+        plan["anysearch_batches"] = []
+    return plan
+
+
+def choose_verify_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    prioritized: list[dict[str, Any]] = []
+    for item in items:
+        normalized = normalize_item(item)
+        if normalized["source_level"] != "首选证据" or normalized["evidence_status"] != "已确认":
+            prioritized.append(normalized)
+            continue
+        if normalized["bucket"] in {"政治与政策", "商业与市场", "专项关注"}:
+            prioritized.append(normalized)
+    return prioritized
+
+
+def build_deep_research_verify_tasks(contract: Contract, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    deep_research_skill = REPO_ROOT / "references" / "skills" / "deep-research"
+    tasks: list[dict[str, Any]] = []
+    for idx, item in enumerate(items, start=1):
+        verification_questions = [
+            f"核验事件是否准确：{item['title']}",
+            f"核对关键事实、时间、数字与主体：{item['what']}",
+            f"评估为什么重要这条判断是否被现有证据支持：{item['why']}",
+        ]
+        if item["bucket"] in {"政治与政策", "商业与市场", "专项关注"}:
+            verification_questions.append("优先检查是否存在官方、监管、公司公告或一手文件。")
+        tasks.append(
+            {
+                "task_id": f"verify-{idx}",
+                "title": item["title"],
+                "bucket": item["bucket"],
+                "recommended_mode": "fact-check",
+                "recommended_skill_path": str(deep_research_skill),
+                "input_brief": {
+                    "claim": item["what"],
+                    "importance_judgment": item["why"],
+                    "current_source_level": item["source_level"],
+                    "current_evidence_status": item["evidence_status"],
+                    "known_sources": item.get("sources", []),
+                },
+                "verification_questions": verification_questions,
+                "success_criteria": [
+                    "确认关键事实与时间线是否一致",
+                    "找到至少一个更强来源或明确说明为什么做不到",
+                    "给出保留、降级或移入继续跟踪的判断",
+                ],
+                "command_prompt": (
+                    f"Use vendored deep-research in fact-check mode to verify this news item: "
+                    f"title={item['title']}; claim={item['what']}; why_it_matters={item['why']}."
+                ),
+            }
+        )
+    return tasks
+
+
+def build_builtin_verify_checks(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    checks: list[dict[str, Any]] = []
+    for idx, item in enumerate(items, start=1):
+        checks.append(
+            {
+                "task_id": f"builtin-verify-{idx}",
+                "title": item["title"],
+                "checks": [
+                    "交叉核对事件时间、地点、主体与数字",
+                    "确认是否已有首选证据",
+                    "若仍是次选证据或待确认，移入继续跟踪",
+                ],
+            }
+        )
+    return checks
+
+
+def build_verification_result_contract() -> dict[str, Any]:
+    return {
+        "version": 1,
+        "required_fields": VERIFICATION_RESULT_REQUIRED_FIELDS,
+        "optional_fields": VERIFICATION_RESULT_OPTIONAL_FIELDS,
+        "verdicts": {
+            "keep": "保留在主简报，并可用更强证据字段覆盖原字段。",
+            "confirm": "等同 keep，用于已核实通过的条目。",
+            "downgrade": "保留条目，但下调证据展示等级。",
+            "watch": "移入继续跟踪，不进入主简报。",
+            "move_to_watch": "等同 watch。",
+            "continue_tracking": "等同 watch。",
+        },
+    }
+
+
+def build_verification_result_template(item: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "title": item["title"],
+        "verdict": "",
+        "claim": item["what"],
+        "why": item["why"],
+        "source_level": item["source_level"],
+        "evidence_status": item["evidence_status"],
+        "sources": item.get("sources", []),
+        "need_confirm": item.get("need_confirm", ""),
+        "follow_up": item.get("follow_up", ""),
+    }
+
+
+def build_verification_result_templates(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [build_verification_result_template(item) for item in items]
+
+
+def build_verify_execution_plan(contract: Contract, items: list[dict[str, Any]]) -> dict[str, Any]:
+    route = build_route_recommendation(contract)
+    verify_step = next(step for step in route["route_steps"] if step["name"] == "verify")
+    main_items, _follow_ups = split_items(items)
+    verify_items = choose_verify_items(main_items)
+    plan = {
+        "recommended_adapter": verify_step["recommended_adapter"],
+        "reason": verify_step["reason"],
+        "verify_candidate_count": len(verify_items),
+        "verify_candidates": [item["title"] for item in verify_items],
+        "verification_result_contract": build_verification_result_contract(),
+        "verification_result_templates": build_verification_result_templates(verify_items),
+        "builtin_checks": build_builtin_verify_checks(verify_items),
+    }
+    if verify_step["recommended_adapter"] == "vendored_deep_research":
+        plan["execution_mode"] = "deep_research_fact_check_tasks"
+        plan["deep_research_tasks"] = build_deep_research_verify_tasks(contract, verify_items)
+    else:
+        plan["execution_mode"] = "built_in_verification"
+        plan["deep_research_tasks"] = []
+    return plan
+
+
+def load_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def build_polish_goals(contract: Contract) -> list[str]:
+    goals = [
+        "删除填充开场和过强的连接词",
+        "保持事实与证据字段不被改写出新含义",
+        "压缩 AI 味明显的套话与总结腔",
+    ]
+    if contract.format in {"long_message", "long_message_exec"}:
+        goals.extend(
+            [
+                "保持长消息信息密度高，避免空泛转场",
+                "让标题、概览、重点新闻之间的节奏更自然",
+            ]
+        )
+    if contract.audience == "executive":
+        goals.append("优先保留判断句，减少背景铺垫。")
+    return goals
+
+
+def build_builtin_polish_checks(contract: Contract) -> list[str]:
+    checks = [
+        "检查标题是否事实化，避免 clickbait",
+        "检查为什么重要是否短于发生了什么",
+        "检查来源级别、证据状态、来源字段顺序是否一致",
+        "检查是否删除了空节和占位文字",
+    ]
+    if contract.format in {"long_message", "long_message_exec"}:
+        checks.extend(
+            [
+                "检查分主题速览是否比重点新闻更紧凑",
+                "检查结尾停在继续跟踪，不加礼貌性尾巴",
+            ]
+        )
+    return checks
+
+
+def build_polish_execution_plan(
+    contract: Contract,
+    items: list[dict[str, Any]] | None = None,
+    draft_file: Path | None = None,
+) -> dict[str, Any]:
+    route = build_route_recommendation(contract)
+    polish_step = next(step for step in route["route_steps"] if step["name"] == "polish")
+    draft_preview = ""
+    if draft_file and draft_file.exists():
+        draft_preview = load_text(draft_file)[:500]
+    item_titles = [normalize_item(item)["title"] for item in items] if items else []
+    plan = {
+        "recommended_adapter": polish_step["recommended_adapter"],
+        "reason": polish_step["reason"],
+        "draft_file": str(draft_file) if draft_file else "",
+        "draft_preview": draft_preview,
+        "item_titles": item_titles,
+    }
+    if polish_step["recommended_adapter"] == "vendored_humanizer_zh":
+        humanizer_skill = REPO_ROOT / "references" / "skills" / "humanizer-zh"
+        plan["execution_mode"] = "humanizer_zh_edit_task"
+        plan["humanizer_task"] = {
+            "recommended_skill_path": str(humanizer_skill),
+            "editing_goals": build_polish_goals(contract),
+            "protected_invariants": [
+                "不新增未核验事实",
+                "不改写来源级别、证据状态和来源含义",
+                "不删除继续跟踪中仍需保留的观察点",
+            ],
+            "command_prompt": (
+                "Use vendored humanizer-zh to revise the Chinese briefing draft so it reads more naturally "
+                "while preserving facts, evidence labels, and source lines."
+            ),
+        }
+        plan["builtin_checks"] = []
+    else:
+        plan["execution_mode"] = "built_in_polish"
+        plan["humanizer_task"] = {}
+        plan["builtin_checks"] = build_builtin_polish_checks(contract)
+    return plan
+
+
+def build_handoff_package(
+    contract: Contract,
+    collect_plan: dict[str, Any],
+    verify_plan: dict[str, Any] | None = None,
+    polish_plan: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    steps: list[dict[str, Any]] = []
+
+    if collect_plan:
+        if collect_plan.get("execution_mode") == "anysearch_batch_search":
+            steps.append(
+                {
+                    "step": "collect",
+                    "status": "ready",
+                    "adapter": collect_plan.get("recommended_adapter"),
+                    "execution_mode": collect_plan.get("execution_mode"),
+                    "primary_inputs": {
+                        "freshness": collect_plan.get("freshness"),
+                        "batch_count": len(collect_plan.get("anysearch_batches", [])),
+                    },
+                    "artifacts": collect_plan.get("anysearch_batches", []),
+                    "fallback": {
+                        "execution_mode": "native_web_search",
+                        "queries": collect_plan.get("fallback_web_queries", {}),
+                    },
+                }
+            )
+        else:
+            steps.append(
+                {
+                    "step": "collect",
+                    "status": "ready",
+                    "adapter": collect_plan.get("recommended_adapter"),
+                    "execution_mode": collect_plan.get("execution_mode"),
+                    "primary_inputs": {
+                        "queries": collect_plan.get("fallback_web_queries", {}),
+                    },
+                    "artifacts": [],
+                    "fallback": {},
+                }
+            )
+
+    if verify_plan:
+        if verify_plan.get("execution_mode") == "deep_research_fact_check_tasks":
+            steps.append(
+                {
+                    "step": "verify",
+                    "status": "ready",
+                    "adapter": verify_plan.get("recommended_adapter"),
+                    "execution_mode": verify_plan.get("execution_mode"),
+                    "primary_inputs": {
+                        "verify_candidate_count": verify_plan.get("verify_candidate_count", 0),
+                        "verify_candidates": verify_plan.get("verify_candidates", []),
+                    },
+                    "artifacts": verify_plan.get("deep_research_tasks", []),
+                    "fallback": {
+                        "execution_mode": "built_in_verification",
+                        "checks": verify_plan.get("builtin_checks", []),
+                    },
+                }
+            )
+        else:
+            steps.append(
+                {
+                    "step": "verify",
+                    "status": "ready",
+                    "adapter": verify_plan.get("recommended_adapter"),
+                    "execution_mode": verify_plan.get("execution_mode"),
+                    "primary_inputs": {
+                        "verify_candidate_count": verify_plan.get("verify_candidate_count", 0),
+                        "verify_candidates": verify_plan.get("verify_candidates", []),
+                    },
+                    "artifacts": verify_plan.get("builtin_checks", []),
+                    "fallback": {},
+                }
+            )
+
+    if polish_plan:
+        if polish_plan.get("execution_mode") == "humanizer_zh_edit_task":
+            steps.append(
+                {
+                    "step": "polish",
+                    "status": "ready",
+                    "adapter": polish_plan.get("recommended_adapter"),
+                    "execution_mode": polish_plan.get("execution_mode"),
+                    "primary_inputs": {
+                        "draft_file": polish_plan.get("draft_file", ""),
+                        "item_titles": polish_plan.get("item_titles", []),
+                    },
+                    "artifacts": [polish_plan.get("humanizer_task", {})],
+                    "fallback": {
+                        "execution_mode": "built_in_polish",
+                        "checks": polish_plan.get("builtin_checks", []),
+                    },
+                }
+            )
+        else:
+            steps.append(
+                {
+                    "step": "polish",
+                    "status": "ready",
+                    "adapter": polish_plan.get("recommended_adapter"),
+                    "execution_mode": polish_plan.get("execution_mode"),
+                    "primary_inputs": {
+                        "draft_file": polish_plan.get("draft_file", ""),
+                        "item_titles": polish_plan.get("item_titles", []),
+                    },
+                    "artifacts": polish_plan.get("builtin_checks", []),
+                    "fallback": {},
+                }
+            )
+
+    return {
+        "version": 1,
+        "contract_summary": {
+            "time_window": contract.time_window,
+            "topic_mix": contract.topic_mix,
+            "depth": contract.depth,
+            "format": contract.format,
+            "audience": contract.audience,
+            "mode": contract.mode,
+        },
+        "adapter_inventory": contract.adapter_discovery.get("available_adapters", []),
+        "steps": steps,
+    }
+
+
+def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
+    queue: list[dict[str, Any]] = []
+    ordinal = 1
+    for step in handoff_package.get("steps", []):
+        execution_mode = step.get("execution_mode", "")
+        if execution_mode == "anysearch_batch_search":
+            for batch in step.get("artifacts", []):
+                queue.append(
+                    {
+                        "order": ordinal,
+                        "phase": step["step"],
+                        "executor": step.get("adapter"),
+                        "action": "run_batch_search",
+                        "target": batch.get("batch_name", ""),
+                        "command": batch.get("command_hint", ""),
+                        "payload": batch.get("payload", []),
+                        "requires_network": True,
+                        "consumes_artifact": "query_pack",
+                        "produces_artifact": "candidate_pool",
+                        "success_signal": "batch_search returns result set for every query object",
+                    }
+                )
+                ordinal += 1
+        elif execution_mode == "native_web_search":
+            queue.append(
+                {
+                    "order": ordinal,
+                    "phase": step["step"],
+                        "executor": step.get("adapter"),
+                        "action": "run_native_web_queries",
+                        "target": step["step"],
+                        "command": "",
+                        "payload": step.get("primary_inputs", {}).get("queries", {}),
+                        "requires_network": True,
+                        "consumes_artifact": "query_pack",
+                        "produces_artifact": "candidate_pool",
+                        "success_signal": "top queries return enough candidate headlines to move into ranking",
+                    }
+                )
+            ordinal += 1
+        elif execution_mode == "deep_research_fact_check_tasks":
+            for task in step.get("artifacts", []):
+                queue.append(
+                    {
+                        "order": ordinal,
+                        "phase": step["step"],
+                        "executor": step.get("adapter"),
+                        "action": "run_fact_check_task",
+                        "target": task.get("title", ""),
+                        "command": task.get("command_prompt", ""),
+                        "payload": task,
+                        "requires_network": True,
+                        "consumes_artifact": "retained_item",
+                        "produces_artifact": "verification_result",
+                        "success_signal": "task returns keep/downgrade/watch judgment with stronger evidence",
+                    }
+                )
+                ordinal += 1
+        elif execution_mode == "built_in_verification":
+            queue.append(
+                {
+                    "order": ordinal,
+                    "phase": step["step"],
+                        "executor": step.get("adapter"),
+                        "action": "run_builtin_checks",
+                        "target": step["step"],
+                        "command": "",
+                        "payload": step.get("artifacts", []),
+                        "requires_network": False,
+                        "consumes_artifact": "retained_item",
+                        "produces_artifact": "verification_notes",
+                        "success_signal": "each candidate is either confirmed or moved to continue tracking",
+                    }
+                )
+            ordinal += 1
+        elif execution_mode == "humanizer_zh_edit_task":
+            artifact = step.get("artifacts", [{}])[0]
+            queue.append(
+                {
+                    "order": ordinal,
+                    "phase": step["step"],
+                        "executor": step.get("adapter"),
+                        "action": "run_humanizer_edit",
+                        "target": step.get("primary_inputs", {}).get("draft_file", ""),
+                        "command": artifact.get("command_prompt", ""),
+                        "payload": artifact,
+                        "requires_network": False,
+                        "consumes_artifact": "draft_briefing",
+                        "produces_artifact": "polished_briefing",
+                        "success_signal": "draft reads more naturally without changing facts or evidence labels",
+                    }
+                )
+            ordinal += 1
+        elif execution_mode == "built_in_polish":
+            queue.append(
+                {
+                    "order": ordinal,
+                    "phase": step["step"],
+                        "executor": step.get("adapter"),
+                        "action": "run_builtin_polish_checks",
+                        "target": step.get("primary_inputs", {}).get("draft_file", "") or step["step"],
+                        "command": "",
+                        "payload": step.get("artifacts", []),
+                        "requires_network": False,
+                        "consumes_artifact": "draft_briefing",
+                        "produces_artifact": "polish_checklist_result",
+                        "success_signal": "draft passes structure and wording checks",
+                    }
+                )
+            ordinal += 1
+    next_action_summary = queue[0] if queue else {}
+    return {
+        "version": 1,
+        "queue_length": len(queue),
+        "queue": queue,
+        "next_action_summary": next_action_summary,
+    }
+
+
 def cmd_queries(args: argparse.Namespace) -> int:
     contract = build_contract(args)
     payload = {
@@ -472,11 +1036,141 @@ def cmd_route(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_collect(args: argparse.Namespace) -> int:
+    contract = build_contract(args)
+    payload = {
+        "adapter_discovery": contract.adapter_discovery,
+        "route_recommendation": build_route_recommendation(contract),
+        "collect_execution_plan": build_collect_execution_plan(contract),
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_verify(args: argparse.Namespace) -> int:
+    contract = build_contract(args)
+    items = load_items(Path(args.items_file))
+    payload = {
+        "adapter_discovery": contract.adapter_discovery,
+        "route_recommendation": build_route_recommendation(contract),
+        "verify_execution_plan": build_verify_execution_plan(contract, items),
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_polish(args: argparse.Namespace) -> int:
+    contract = build_contract(args)
+    items = load_items(Path(args.items_file)) if args.items_file else None
+    draft_file = Path(args.draft_file) if args.draft_file else None
+    payload = {
+        "adapter_discovery": contract.adapter_discovery,
+        "route_recommendation": build_route_recommendation(contract),
+        "polish_execution_plan": build_polish_execution_plan(contract, items, draft_file),
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_pipeline(args: argparse.Namespace) -> int:
+    contract = build_contract(args)
+    items = load_items(Path(args.items_file)) if args.items_file else None
+    draft_file = Path(args.draft_file) if args.draft_file else None
+    route = build_route_recommendation(contract)
+    collect_plan = build_collect_execution_plan(contract)
+    verify_plan = build_verify_execution_plan(contract, items) if items else {}
+    polish_plan = build_polish_execution_plan(contract, items, draft_file)
+    payload = {
+        "contract": contract.to_dict(),
+        "route_recommendation": route,
+        "collect_execution_plan": collect_plan,
+        "verify_execution_plan": verify_plan,
+        "polish_execution_plan": polish_plan,
+        "handoff_package": build_handoff_package(contract, collect_plan, verify_plan, polish_plan),
+    }
+    payload["execute_queue"] = build_execute_queue(payload["handoff_package"])
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_execute(args: argparse.Namespace) -> int:
+    contract = build_contract(args)
+    items = load_items(Path(args.items_file)) if args.items_file else None
+    draft_file = Path(args.draft_file) if args.draft_file else None
+    collect_plan = build_collect_execution_plan(contract)
+    verify_plan = build_verify_execution_plan(contract, items) if items else {}
+    polish_plan = build_polish_execution_plan(contract, items, draft_file)
+    handoff = build_handoff_package(contract, collect_plan, verify_plan, polish_plan)
+    payload = {
+        "contract_summary": {
+            "topic_mix": contract.topic_mix,
+            "depth": contract.depth,
+            "format": contract.format,
+            "audience": contract.audience,
+        },
+        "handoff_package": handoff,
+        "execute_queue": build_execute_queue(handoff),
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
 def load_items(path: Path) -> list[dict[str, Any]]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, list):
         raise ValueError("items file must contain a JSON array")
     return data
+
+
+def load_verification_results(path: Path) -> list[dict[str, Any]]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(data, dict):
+        if isinstance(data.get("results"), list):
+            return data["results"]
+        if isinstance(data.get("verification_results"), list):
+            return data["verification_results"]
+        raise ValueError("verification results object must contain a results array")
+    if isinstance(data, list):
+        return data
+    raise ValueError("verification results must be a JSON array or object with results")
+
+
+def normalize_verification_result(result: dict[str, Any]) -> dict[str, Any]:
+    normalized = {
+        "title": str(result.get("title", "")).strip(),
+        "verdict": str(result.get("verdict", "")).strip().lower(),
+    }
+    for field in VERIFICATION_RESULT_OPTIONAL_FIELDS:
+        value = result.get(field)
+        if value not in (None, "", []):
+            normalized[field] = value
+    return normalized
+
+
+def build_verification_result_package(
+    items: list[dict[str, Any]],
+    raw_results: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    main_items, _follow_ups = split_items(items)
+    verify_items = choose_verify_items(main_items)
+    contract = build_verification_result_contract()
+    templates = build_verification_result_templates(verify_items)
+    normalized_results: list[dict[str, Any]] = []
+    if raw_results:
+        allowed_titles = {item["title"] for item in verify_items}
+        for raw in raw_results:
+            normalized = normalize_verification_result(raw)
+            if not normalized["title"] or normalized["title"] not in allowed_titles:
+                continue
+            normalized_results.append(normalized)
+    return {
+        "version": 1,
+        "result_contract": contract,
+        "result_templates": templates,
+        "results": normalized_results,
+        "verification_results": normalized_results,
+        "digest_overlay_ready_results": normalized_results,
+    }
 
 
 def render_sources(sources: Any) -> str:
@@ -495,6 +1189,52 @@ def normalize_item(item: dict[str, Any]) -> dict[str, Any]:
     normalized.setdefault("evidence_status", "交叉验证中")
     normalized.setdefault("sources", [])
     return normalized
+
+
+def apply_verification_results(
+    items: list[dict[str, Any]],
+    verification_results: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    by_title = {
+        str(result.get("title", "")).strip(): result
+        for result in verification_results
+        if str(result.get("title", "")).strip()
+    }
+    updated_items: list[dict[str, Any]] = []
+    for item in items:
+        normalized = normalize_item(item)
+        result = by_title.get(normalized["title"])
+        if not result:
+            updated_items.append(normalized)
+            continue
+
+        merged = dict(normalized)
+        if result.get("claim"):
+            merged["what"] = result["claim"]
+        if result.get("why"):
+            merged["why"] = result["why"]
+        if result.get("source_level"):
+            merged["source_level"] = result["source_level"]
+        if result.get("evidence_status"):
+            merged["evidence_status"] = result["evidence_status"]
+        if result.get("sources"):
+            merged["sources"] = result["sources"]
+        if result.get("need_confirm"):
+            merged["need_confirm"] = result["need_confirm"]
+        verdict = str(result.get("verdict", "")).strip().lower()
+        if verdict in {"watch", "move_to_watch", "continue_tracking"}:
+            # A watch verdict should reliably move the item into the follow-up section.
+            merged["source_level"] = "线索待证"
+            merged["evidence_status"] = "待确认"
+            merged["follow_up"] = result.get("follow_up", merged.get("follow_up", merged["title"]))
+        elif verdict in {"downgrade"}:
+            merged["source_level"] = result.get("source_level", "次选证据")
+            merged["evidence_status"] = result.get("evidence_status", "交叉验证中")
+        elif verdict in {"keep", "confirm"}:
+            merged["source_level"] = result.get("source_level", merged["source_level"])
+            merged["evidence_status"] = result.get("evidence_status", merged["evidence_status"])
+        updated_items.append(merged)
+    return updated_items
 
 
 def split_items(items: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[str]]:
@@ -683,7 +1423,23 @@ def render_digest(contract: Contract, items: list[dict[str, Any]], item_limit: i
 def cmd_digest(args: argparse.Namespace) -> int:
     contract = build_contract(args)
     items = load_items(Path(args.items_file))
+    if args.verification_results_file:
+        verification_results = load_verification_results(Path(args.verification_results_file))
+        items = apply_verification_results(items, verification_results)
     print(render_digest(contract, items, args.item_limit))
+    return 0
+
+
+def cmd_verify_results(args: argparse.Namespace) -> int:
+    items = load_items(Path(args.items_file))
+    raw_results = load_verification_results(Path(args.results_file)) if args.results_file else None
+    print(
+        json.dumps(
+            build_verification_result_package(items, raw_results),
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
     return 0
 
 
@@ -725,9 +1481,45 @@ def build_parser() -> argparse.ArgumentParser:
     add_common(route_parser)
     route_parser.set_defaults(func=cmd_route)
 
+    collect_parser = subparsers.add_parser("collect", help="Build the collect-stage execution plan")
+    add_common(collect_parser)
+    collect_parser.set_defaults(func=cmd_collect)
+
+    verify_parser = subparsers.add_parser("verify", help="Build the verify-stage execution plan")
+    add_common(verify_parser)
+    verify_parser.add_argument("--items-file", required=True)
+    verify_parser.set_defaults(func=cmd_verify)
+
+    verify_results_parser = subparsers.add_parser(
+        "verify-results",
+        help="Emit or normalize the stable verification-results contract",
+    )
+    verify_results_parser.add_argument("--items-file", required=True)
+    verify_results_parser.add_argument("--results-file")
+    verify_results_parser.set_defaults(func=cmd_verify_results)
+
+    polish_parser = subparsers.add_parser("polish", help="Build the polish-stage execution plan")
+    add_common(polish_parser)
+    polish_parser.add_argument("--items-file")
+    polish_parser.add_argument("--draft-file")
+    polish_parser.set_defaults(func=cmd_polish)
+
+    pipeline_parser = subparsers.add_parser("pipeline", help="Build the full collect/verify/polish execution plan")
+    add_common(pipeline_parser)
+    pipeline_parser.add_argument("--items-file")
+    pipeline_parser.add_argument("--draft-file")
+    pipeline_parser.set_defaults(func=cmd_pipeline)
+
+    execute_parser = subparsers.add_parser("execute", help="Build a sequential execute-ready queue")
+    add_common(execute_parser)
+    execute_parser.add_argument("--items-file")
+    execute_parser.add_argument("--draft-file")
+    execute_parser.set_defaults(func=cmd_execute)
+
     digest_parser = subparsers.add_parser("digest", help="Render a digest from JSON items")
     add_common(digest_parser)
     digest_parser.add_argument("--items-file", required=True)
+    digest_parser.add_argument("--verification-results-file")
     digest_parser.add_argument("--item-limit", type=int)
     digest_parser.set_defaults(func=cmd_digest)
     return parser

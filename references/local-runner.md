@@ -22,6 +22,12 @@ All commands use only Python standard library:
 python3 scripts/standalone_runner.py contract
 python3 scripts/standalone_runner.py adapters
 python3 scripts/standalone_runner.py route
+python3 scripts/standalone_runner.py collect
+python3 scripts/standalone_runner.py verify --items-file items.json
+python3 scripts/standalone_runner.py verify-results --items-file items.json
+python3 scripts/standalone_runner.py polish --draft-file digest.txt
+python3 scripts/standalone_runner.py pipeline --items-file items.json --draft-file digest.txt
+python3 scripts/standalone_runner.py execute --items-file items.json --draft-file digest.txt
 python3 scripts/standalone_runner.py queries --topic-mix default
 python3 scripts/standalone_runner.py digest --items-file items.json
 ```
@@ -115,6 +121,158 @@ Typical behavior:
 2. analyst or specialty-heavy runs prefer vendored `deep-research` for retained-item verification when available
 3. Chinese long-message output may prefer vendored `humanizer-zh` for final polish when available
 
+### `collect`
+
+Turn the `collect` route recommendation into an execution-ready plan.
+
+Examples:
+
+```bash
+python3 scripts/standalone_runner.py collect --topic-mix default
+python3 scripts/standalone_runner.py collect --depth analyst --specialty "charging / V2G / BESS"
+```
+
+When the collect route recommends vendored `anysearch`, the output now includes:
+
+1. `execution_mode: anysearch_batch_search`
+2. `anysearch_batches`
+3. a ready-to-use `payload` for each batch
+4. a `command_hint` pointing to the vendored `anysearch_cli.py`
+
+When the collect route stays on the built-in path, the output falls back to:
+
+1. `execution_mode: native_web_search`
+2. `fallback_web_queries`
+
+### `verify`
+
+Turn retained items into a verification-stage execution plan.
+
+Examples:
+
+```bash
+python3 scripts/standalone_runner.py verify --items-file items.json
+python3 scripts/standalone_runner.py verify --items-file items.json --depth analyst --specialty "charging / V2G / BESS"
+```
+
+When the verify route recommends vendored `deep-research`, the output now includes:
+
+1. `execution_mode: deep_research_fact_check_tasks`
+2. `deep_research_tasks`
+3. one task per retained item that should be verified
+4. a `command_prompt` for fact-check style handoff
+5. `verification_result_contract`
+6. `verification_result_templates`
+
+When the verify route stays on the built-in path, the output falls back to:
+
+1. `execution_mode: built_in_verification`
+2. `builtin_checks`
+
+The verify plan now exposes the stable result schema that downstream verification should write back into.
+
+### `verify-results`
+
+Emit or normalize the stable verification result package between `verify` and `digest`.
+
+Examples:
+
+```bash
+python3 scripts/standalone_runner.py verify-results --items-file items.json
+python3 scripts/standalone_runner.py verify-results --items-file items.json --results-file verification-results.json
+```
+
+Use this command in two ways:
+
+1. without `--results-file`, to generate result templates for the current verify candidates
+2. with `--results-file`, to normalize deep-research or manual verification notes into a digest-ready package
+
+The output includes:
+
+1. `result_contract`
+2. `result_templates`
+3. `results`
+4. `verification_results`
+5. `digest_overlay_ready_results`
+
+### `polish`
+
+Turn the final-writing route into an execution-ready polish plan.
+
+Examples:
+
+```bash
+python3 scripts/standalone_runner.py polish --draft-file digest.txt --format long_message
+python3 scripts/standalone_runner.py polish --draft-file digest.txt --audience executive
+python3 scripts/standalone_runner.py polish --items-file items.json --format standard_digest
+```
+
+When the polish route recommends vendored `humanizer-zh`, the output now includes:
+
+1. `execution_mode: humanizer_zh_edit_task`
+2. `humanizer_task`
+3. `editing_goals`
+4. `protected_invariants`
+5. a `command_prompt` for the final revision pass
+
+When the polish route stays on the built-in path, the output falls back to:
+
+1. `execution_mode: built_in_polish`
+2. `builtin_checks`
+
+### `pipeline`
+
+Build one combined execution plan for the three downstream stages:
+
+1. `collect`
+2. `verify`
+3. `polish`
+
+Examples:
+
+```bash
+python3 scripts/standalone_runner.py pipeline --items-file items.json --draft-file digest.txt
+python3 scripts/standalone_runner.py pipeline --depth analyst --specialty "charging / V2G / BESS" --items-file items.json
+```
+
+Use this command when an upper-layer orchestrator wants one JSON object instead of composing three separate subcommands.
+
+The `pipeline` output now also includes `handoff_package`, which normalizes:
+
+1. `collect`
+2. `verify`
+3. `polish`
+
+into one stable step list with:
+
+1. `step`
+2. `adapter`
+3. `execution_mode`
+4. `primary_inputs`
+5. `artifacts`
+6. `fallback`
+
+### `execute`
+
+Build a sequential execute-ready queue on top of `handoff_package`.
+
+Examples:
+
+```bash
+python3 scripts/standalone_runner.py execute --items-file items.json --draft-file digest.txt
+python3 scripts/standalone_runner.py execute --depth analyst --specialty "charging / V2G / BESS" --items-file items.json
+```
+
+Use this command when an upper-layer executor wants a flat ordered queue instead of nested plans.
+
+The output includes:
+
+1. `execute_queue.queue_length`
+2. one ordered task per collect batch / verify task / polish task
+3. normalized fields: `order`, `phase`, `executor`, `action`, `target`, `command`, `payload`
+4. scheduling metadata: `requires_network`, `consumes_artifact`, `produces_artifact`, `success_signal`
+5. `next_action_summary` for the first runnable queue item
+
 ### `digest`
 
 Render a standard digest from retained items stored in JSON.
@@ -135,6 +293,7 @@ Example:
 
 ```bash
 python3 scripts/standalone_runner.py digest --items-file items.json --specialty "charging / V2G / BESS"
+python3 scripts/standalone_runner.py digest --items-file items.json --verification-results-file verification-results.json
 ```
 
 Template selection is now parameterized:
@@ -157,6 +316,34 @@ Supported rendering rules include:
 If `--format` is omitted, the runner infers a default from `depth` and `audience`.
 
 The `contract` output now also includes `adapter_discovery`, so downstream callers can resolve the briefing contract and inspect local adapter availability in one call.
+
+If `--verification-results-file` is provided, the runner will overlay verify-stage decisions onto retained items before rendering the final digest.
+
+Accepted verification result payload shapes:
+
+1. a raw JSON array
+2. an object with `results: [...]`
+3. an object with `verification_results: [...]`
+
+The full package emitted by `verify-results` is also accepted directly by `digest`, because it now includes `results` and `verification_results` aliases.
+
+Per-result fields currently recognized:
+
+1. `title`
+2. `claim`
+3. `why`
+4. `source_level`
+5. `evidence_status`
+6. `sources`
+7. `need_confirm`
+8. `verdict`
+9. `follow_up`
+
+Current `verdict` behavior:
+
+1. `keep` / `confirm`: keep the item in the main digest and apply stronger fields if provided
+2. `downgrade`: keep the item, but lower its evidence display using the supplied or default downgraded labels
+3. `watch` / `move_to_watch` / `continue_tracking`: move the item into `继续跟踪` and preserve `follow_up` if provided
 
 ## Ownership rule
 
