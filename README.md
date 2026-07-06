@@ -24,7 +24,7 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 ## 中文说明
 
-`more-news-briefing` 是一个独立可运行的新闻简报 skill，用于把分散的时事信息整理成结构稳定、可追溯来源、适合直接交付的多主题资讯摘要。它覆盖从需求归一化、候选信息收集、去重、排序，到最终格式化输出的完整链路，适合一次性简报，也适合持续性日报、周报和专题监测。
+`more-news-briefing` 是一个独立可运行的新闻/行业信息简报 skill，用于把分散的时事信息整理成结构稳定、可追溯来源、适合直接交付的多主题资讯摘要。它覆盖从需求归一化、候选信息收集、去重、排序，到最终格式化输出的完整链路，适合一次性简报，也适合持续性日报、周报和专题监测。
 
 ### 你为什么会愿意持续用它
 
@@ -62,6 +62,16 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 - 主流程完整内聚：检索扩展、候选合并、优先级排序、事实压缩和最终成稿都在同一套工作流里完成
 - 更适合交付而不是试验：内置输入契约、输出模板、验收清单和运行 runbook，适合直接产出日报、周报、研究跟踪或微信/飞书长消息版简报
 
+### 基于实现的功能亮点
+
+- 首次使用不容易跑偏：内置 `onboarding-template`，会先让用户用多选方式确定“综合热点 / 固定主题 / 专项持续跟踪”，再细化子方向、关注重点、地域范围和信息源风格，避免一上来就搜得太散
+- 默认主题开箱即用：如果用户只说“做个今日简报”，实现会自动落到 `AI与科技 / 政治与政策 / 商业与市场 / 文化与社会 / 体育` 这组预定义主题；一旦补充专项主题，会自动把“专项关注”并入同一份简报
+- 专项监测更像行业 watch，而不是临时搜词：除了收集关键词，还支持 geography、priority 以及公司/机构/社区 watchlist，适合储能、充电桩、V2G、快充、无线充电、超级电容这类长期跟踪主题
+- 简讯模板不是单一版式：仓库里已经预置 `Short Brief`、`Standard Digest`、`Analyst Watch`、`Source-attributed`、`WeChat / Feishu long message`、`信息密度高版`、`领导速览版` 等模板，能按阅读场景直接出稿
+- 天然适合飞书/微信推送：长消息模板已经按聊天界面做了标题、段落密度、分主题速览和“继续跟踪”收口，既能做高信息密度版，也能做领导速览版，减少二次手工改写
+- 可自定义后续推送与自动化：当任务包含持续投递时，skill 约定可以把最终稳定结构交给 `automation-workflows`，继续衔接定时发送、频道分发或重复执行，不需要每次重配整套流程
+- 弱证据不会硬塞进正文：验证后可以把条目保留、降级或移到“继续跟踪”，这样正式简报和观察项天然分层，更适合研究汇报和团队同步
+
 ### 为什么是这个 Skill
 
 很多资讯工具擅长“搜链接”，也有很多工具擅长“润色文案”，但真正难的是把多来源、跨主题、彼此重复的时事信息压缩成一个有排序、有判断、能直接发出去的简报。`more-news-briefing` 的价值就在这里。
@@ -85,7 +95,7 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 2. 政治与政策
 3. 商业与市场
 4. 文化与社会
-5. 体育
+5. 教育与体育
 6. 用户重点关注的专项主题
 
 ### 工作模式
@@ -202,6 +212,16 @@ On first use, the skill will guide you through defining specialty topic scope, k
 - Fully self-contained: it completes the collect-filter-verify-format loop on its own, without relying on companion skills, plugins, or external orchestration
 - Tighter workflow ownership: search expansion, candidate merging, prioritization, factual compression, and final briefing output all live inside one cohesive workflow
 - Built for delivery, not just exploration: it includes an input contract, output templates, acceptance checks, and runbooks so the result is ready for reporting or chat-based delivery
+
+### Implementation-Backed Highlights
+
+- First-use setup is guided instead of ad hoc: the built-in onboarding flow asks the user to choose broad news, fixed themes, or specialty monitoring first, then narrows subtopic, priorities, geography, and source style before retrieval starts
+- Default topics work out of the box: if the user simply asks for a digest, the implementation falls back to a predefined mix of `AI and technology`, `politics and policy`, `business and markets`, `culture and society`, and `sports`; a specialty topic is then appended into the same briefing when needed
+- Specialty monitoring behaves more like an industry watchlist than a one-off search: the contract supports specialty keywords, geography, priority lenses, and company / institution / community watchlists for repeatable tracking
+- Output is template-rich, not one-size-fits-all: the repository already includes `Short Brief`, `Standard Digest`, `Analyst Watch`, source-attributed formats, WeChat / Feishu long-message layouts, a high-density variant, and an executive-skim variant
+- Chat delivery is a first-class scenario: the long-message renderers are already shaped for WeChat and Feishu style reading, with short title lines, dense top items, topic-bucket recap, and a clean follow-up section
+- Ongoing push workflows can be customized: when the job includes repeated delivery, the skill is designed to hand off its stable digest structure to `automation-workflows` for scheduling and downstream channel delivery
+- Weak evidence is handled visibly: verification can keep, downgrade, or move items into a follow-up watch section so the main digest stays cleaner for actual reporting
 
 ### Why This Skill
 
