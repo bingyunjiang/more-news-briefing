@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -620,6 +621,16 @@ def build_builtin_verify_checks(items: list[dict[str, Any]]) -> list[dict[str, A
     return checks
 
 
+def make_result_stub_path(output_file: str, title: str) -> str:
+    if not output_file:
+        return ""
+    output_path = Path(output_file)
+    slug = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]+", "-", title).strip("-").lower() or "result"
+    suffix = "".join(output_path.suffixes) or ".json"
+    base_name = output_path.name[: -len(suffix)] if suffix else output_path.name
+    return str(output_path.with_name(f"{base_name}.{slug}.json"))
+
+
 def build_verification_result_contract() -> dict[str, Any]:
     return {
         "version": 1,
@@ -654,6 +665,30 @@ def build_verification_result_templates(items: list[dict[str, Any]]) -> list[dic
     return [build_verification_result_template(item) for item in items]
 
 
+def build_builtin_verification_tasks(
+    items: list[dict[str, Any]],
+    verification_results_file: str = "",
+) -> list[dict[str, Any]]:
+    tasks: list[dict[str, Any]] = []
+    for idx, item in enumerate(items, start=1):
+        result_stub_file = make_result_stub_path(verification_results_file, item["title"])
+        tasks.append(
+            {
+                "task_id": f"builtin-verify-{idx}",
+                "title": item["title"],
+                "checks": [
+                    "交叉核对事件时间、地点、主体与数字",
+                    "确认是否已有首选证据",
+                    "若仍是次选证据或待确认，移入继续跟踪",
+                ],
+                "result_template": build_verification_result_template(item),
+                "judgment_options": ["keep", "confirm", "downgrade", "watch"],
+                "result_stub_file": result_stub_file,
+            }
+        )
+    return tasks
+
+
 def build_verify_execution_plan(contract: Contract, items: list[dict[str, Any]]) -> dict[str, Any]:
     route = build_route_recommendation(contract)
     verify_step = next(step for step in route["route_steps"] if step["name"] == "verify")
@@ -667,6 +702,7 @@ def build_verify_execution_plan(contract: Contract, items: list[dict[str, Any]])
         "verification_result_contract": build_verification_result_contract(),
         "verification_result_templates": build_verification_result_templates(verify_items),
         "builtin_checks": build_builtin_verify_checks(verify_items),
+        "builtin_verification_tasks": build_builtin_verification_tasks(verify_items),
     }
     if verify_step["recommended_adapter"] == "vendored_deep_research":
         plan["execution_mode"] = "deep_research_fact_check_tasks"
@@ -861,7 +897,7 @@ def build_handoff_package(
                         "verify_candidates": verify_plan.get("verify_candidates", []),
                         "verification_results_file": artifact_paths.get("verification_results_file", ""),
                     },
-                    "artifacts": verify_plan.get("builtin_checks", []),
+                    "artifacts": verify_plan.get("builtin_verification_tasks", []),
                     "fallback": {},
                 }
             )
@@ -921,6 +957,7 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
     queue: list[dict[str, Any]] = []
     ordinal = 1
     artifact_paths = handoff_package.get("artifact_paths", {})
+    runner_path = Path(__file__).resolve()
     for step in handoff_package.get("steps", []):
         execution_mode = step.get("execution_mode", "")
         if execution_mode == "anysearch_batch_search":
@@ -960,6 +997,10 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
             ordinal += 1
         elif execution_mode == "deep_research_fact_check_tasks":
             for task in step.get("artifacts", []):
+                result_stub_file = make_result_stub_path(
+                    step.get("primary_inputs", {}).get("verification_results_file", ""),
+                    task.get("title", ""),
+                )
                 queue.append(
                     {
                         "order": ordinal,
@@ -973,8 +1014,18 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
                         "consumes_artifact": "retained_item",
                         "produces_artifact": "verification_result",
                         "output_file": step.get("primary_inputs", {}).get("verification_results_file", ""),
+                        "result_stub_file": result_stub_file,
                         "success_signal": "task returns keep/downgrade/watch judgment with stronger evidence",
                         "next_action_summary": "append normalized verification result into the shared verification-results file",
+                        "merge_command_hint": (
+                            f"python3 {runner_path} verify-results "
+                            f"--items-file {artifact_paths.get('items_file', '')} "
+                            f"--results-file {result_stub_file} "
+                            f"--output-file {step.get('primary_inputs', {}).get('verification_results_file', '')} "
+                            f"--merge"
+                            if artifact_paths.get("items_file") and result_stub_file
+                            else ""
+                        ),
                     }
                 )
                 ordinal += 1
@@ -994,6 +1045,15 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
                         "output_file": step.get("primary_inputs", {}).get("verification_results_file", ""),
                         "success_signal": "each candidate is normalized into keep/downgrade/watch style verification results",
                         "next_action_summary": "write the built-in verification judgments into the shared verification-results file",
+                        "merge_command_hint": (
+                            f"python3 {runner_path} verify-results "
+                            f"--items-file {artifact_paths.get('items_file', '')} "
+                            f"--results-file <built-in-results.json> "
+                            f"--output-file {step.get('primary_inputs', {}).get('verification_results_file', '')} "
+                            f"--merge"
+                            if artifact_paths.get("items_file")
+                            else ""
+                        ),
                     }
                 )
             ordinal += 1
@@ -1509,6 +1569,30 @@ def cmd_digest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_finalize(args: argparse.Namespace) -> int:
+    contract = build_contract(args)
+    items_file = Path(args.items_file)
+    items = load_items(items_file)
+    artifact_paths = build_artifact_paths(items_file, Path(args.output_file) if args.output_file else None)
+    verification_results_file = args.verification_results_file or artifact_paths["verification_results_file"]
+    if verification_results_file and Path(verification_results_file).exists():
+        verification_results = load_verification_results(Path(verification_results_file))
+        items = apply_verification_results(items, verification_results)
+    output = render_digest(contract, items, args.item_limit)
+    output_file = args.output_file or artifact_paths["digest_output_file"]
+    payload = {
+        "artifact_paths": artifact_paths,
+        "verification_results_file_used": verification_results_file if verification_results_file else "",
+        "output_file": output_file,
+        "rendered": output,
+    }
+    if output_file:
+        Path(output_file).write_text(output, encoding="utf-8")
+        payload["written_to"] = output_file
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
 def cmd_verify_results(args: argparse.Namespace) -> int:
     items = load_items(Path(args.items_file))
     raw_results = load_verification_results(Path(args.results_file)) if args.results_file else None
@@ -1618,6 +1702,14 @@ def build_parser() -> argparse.ArgumentParser:
     digest_parser.add_argument("--verification-results-file")
     digest_parser.add_argument("--item-limit", type=int)
     digest_parser.set_defaults(func=cmd_digest)
+
+    finalize_parser = subparsers.add_parser("finalize", help="Render and optionally write the final digest artifact")
+    add_common(finalize_parser)
+    finalize_parser.add_argument("--items-file", required=True)
+    finalize_parser.add_argument("--verification-results-file")
+    finalize_parser.add_argument("--output-file")
+    finalize_parser.add_argument("--item-limit", type=int)
+    finalize_parser.set_defaults(func=cmd_finalize)
     return parser
 
 

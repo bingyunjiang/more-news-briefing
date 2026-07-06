@@ -10,6 +10,7 @@ Scan the day in one pass, from headlines to chatter
 
 中文入口: [跳转到中文说明](#中文说明)  
 English entry: [Jump to English Overview](#english-overview)
+Promo illustration pack: [View README promo illustration pack](./assets/readme-xiaohei-scenes/README.md)
 
 ## 项目表头
 
@@ -58,6 +59,8 @@ python3 scripts/standalone_runner.py digest --items-file items.json --audience e
 - `contract`：把模糊需求收敛成可重复执行的 briefing contract
 - `queries`：按主题桶生成查询包，而不是临时手写搜索词
 - `digest`：把保留条目渲染成可直接交付的简报格式
+
+如果你准备把这个 README 做成更适合传播的 landing 文档，仓库里已经附上 3 张“小黑 + 实物场景图”的配图方案、母版锁定和可执行 prompt，见 [assets/readme-xiaohei-scenes/README.md](/Users/Bing/.codex/skills/more-news-briefing/assets/readme-xiaohei-scenes/README.md:1)。
 
 ### 功能概览
 
@@ -224,6 +227,8 @@ Each command owns one durable piece of the product workflow:
 - `contract`: turns a vague request into a reusable briefing contract
 - `queries`: emits grouped query packs instead of ad hoc search wording
 - `digest`: renders retained items into a delivery-ready briefing format
+
+If you want to turn this README into a more promotion-ready landing page, the repo also includes a three-image Xiaohei promo illustration pack with master locks and executable prompts at [assets/readme-xiaohei-scenes/README.md](/Users/Bing/.codex/skills/more-news-briefing/assets/readme-xiaohei-scenes/README.md:1).
 
 ### What It Does
 

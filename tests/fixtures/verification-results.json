@@ -1,0 +1,24 @@
+{
+  "results": [
+    {
+      "title": "BLS发布6月就业报告",
+      "verdict": "keep",
+      "claim": "美国6月就业增速放缓，劳动力市场边际降温。",
+      "why": "这会直接影响市场对美联储降息节奏的重新定价。",
+      "source_level": "首选证据",
+      "evidence_status": "已确认",
+      "sources": ["BLS", "FOMC watch"]
+    },
+    {
+      "title": "G7发布地缘政治声明",
+      "verdict": "watch",
+      "claim": "G7峰会后就乌克兰、中东与能源安全发布联合表态。",
+      "why": "后续制裁协调与能源供应预期可能受到影响。",
+      "source_level": "次选证据",
+      "evidence_status": "交叉验证中",
+      "sources": ["G7 statement", "Reuters"],
+      "need_confirm": "是否出现配套官方执行文件",
+      "follow_up": "继续确认是否有后续制裁或能源政策文件"
+    }
+  ]
+}

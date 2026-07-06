@@ -1,0 +1,41 @@
+[
+  {
+    "title": "OpenAI previewed GPT-5.6 Sol",
+    "what": "OpenAI started a limited preview for GPT-5.6 Sol, Terra, and Luna.",
+    "why": "It signals a new model release path tied to pre-release government coordination.",
+    "bucket": "AI与科技",
+    "source_level": "首选证据",
+    "evidence_status": "已确认",
+    "sources": ["OpenAI"],
+    "follow_up": "关注全面开放时间表"
+  },
+  {
+    "title": "BLS发布6月就业报告",
+    "what": "美国6月非农新增5.7万人，失业率为4.2%。",
+    "why": "就业放缓会影响市场对美联储后续政策的定价。",
+    "bucket": "商业与市场",
+    "source_level": "首选证据",
+    "evidence_status": "已确认",
+    "sources": ["BLS"],
+    "need_confirm": "后续是否改变9月政策预期"
+  },
+  {
+    "title": "G7发布地缘政治声明",
+    "what": "G7在峰会后发布涉及乌克兰、中东与能源通道的联合表态。",
+    "why": "它会影响后续制裁、能源安全和盟友协调预期。",
+    "bucket": "政治与政策",
+    "source_level": "次选证据",
+    "evidence_status": "交叉验证中",
+    "sources": ["G7 statement"]
+  },
+  {
+    "title": "V2G项目仍需跟踪",
+    "what": "多个V2G与储能部署信号出现，但招标与落地信息仍不完整。",
+    "why": "专项方向值得跟踪，但目前不宜作为已确认主结论。",
+    "bucket": "专项关注",
+    "source_level": "线索待证",
+    "evidence_status": "待确认",
+    "sources": ["industry watch"],
+    "follow_up": "继续核验招标、部署和官方公告"
+  }
+]

@@ -30,6 +30,7 @@ python3 scripts/standalone_runner.py pipeline --items-file items.json --draft-fi
 python3 scripts/standalone_runner.py execute --items-file items.json --draft-file digest.txt
 python3 scripts/standalone_runner.py queries --topic-mix default
 python3 scripts/standalone_runner.py digest --items-file items.json
+python3 scripts/standalone_runner.py finalize --items-file items.json
 ```
 
 The runner now internalizes a subset of defaults from:
@@ -293,6 +294,13 @@ Current path convention:
 
 Verify queue items now also expose `output_file`, so multiple verification tasks can append normalized results into the same shared `verification_results_file`.
 
+Each verify queue item now also exposes:
+
+1. `result_stub_file`
+2. `merge_command_hint`
+
+Use `merge_command_hint` when a single verification task has produced one normalized result JSON and needs to append it into the shared verification-results file.
+
 ### `digest`
 
 Render a standard digest from retained items stored in JSON.
@@ -358,6 +366,27 @@ Per-result fields currently recognized:
 7. `need_confirm`
 8. `verdict`
 9. `follow_up`
+
+### `finalize`
+
+Render the final digest artifact from retained items and the shared verification-results file.
+
+Examples:
+
+```bash
+python3 scripts/standalone_runner.py finalize --items-file items.json
+python3 scripts/standalone_runner.py finalize --items-file items.json --verification-results-file items.verification-results.json
+python3 scripts/standalone_runner.py finalize --items-file items.json --verification-results-file items.verification-results.json --output-file final-digest.txt
+```
+
+Use this command when you want one execution-facing step that:
+
+1. reads retained items
+2. optionally overlays verification results
+3. renders the final digest
+4. optionally writes it to the standard digest artifact path
+
+If `--verification-results-file` is omitted, `finalize` will try the standard shared path inferred from `items-file`.
 
 Current `verdict` behavior:
 
