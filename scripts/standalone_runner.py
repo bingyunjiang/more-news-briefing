@@ -758,13 +758,42 @@ def build_polish_execution_plan(
     return plan
 
 
+def build_artifact_paths(
+    items_file: Path | None = None,
+    draft_file: Path | None = None,
+) -> dict[str, str]:
+    verification_results_file = ""
+    digest_input_items_file = str(items_file) if items_file else ""
+    base_name = ""
+    if items_file:
+        suffix = "".join(items_file.suffixes) or ".json"
+        base_name = items_file.name[: -len(suffix)] if suffix else items_file.name
+        verification_results_file = str(
+            items_file.with_name(f"{base_name}.verification-results.json")
+        )
+
+    digest_output_file = ""
+    if draft_file:
+        digest_output_file = str(draft_file)
+    elif items_file:
+        digest_output_file = str(items_file.with_name(f"{base_name}.digest.txt"))
+
+    return {
+        "items_file": digest_input_items_file,
+        "verification_results_file": verification_results_file,
+        "digest_output_file": digest_output_file,
+    }
+
+
 def build_handoff_package(
     contract: Contract,
     collect_plan: dict[str, Any],
     verify_plan: dict[str, Any] | None = None,
     polish_plan: dict[str, Any] | None = None,
+    artifact_paths: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     steps: list[dict[str, Any]] = []
+    artifact_paths = artifact_paths or build_artifact_paths()
 
     if collect_plan:
         if collect_plan.get("execution_mode") == "anysearch_batch_search":
@@ -811,6 +840,7 @@ def build_handoff_package(
                     "primary_inputs": {
                         "verify_candidate_count": verify_plan.get("verify_candidate_count", 0),
                         "verify_candidates": verify_plan.get("verify_candidates", []),
+                        "verification_results_file": artifact_paths.get("verification_results_file", ""),
                     },
                     "artifacts": verify_plan.get("deep_research_tasks", []),
                     "fallback": {
@@ -829,6 +859,7 @@ def build_handoff_package(
                     "primary_inputs": {
                         "verify_candidate_count": verify_plan.get("verify_candidate_count", 0),
                         "verify_candidates": verify_plan.get("verify_candidates", []),
+                        "verification_results_file": artifact_paths.get("verification_results_file", ""),
                     },
                     "artifacts": verify_plan.get("builtin_checks", []),
                     "fallback": {},
@@ -881,6 +912,7 @@ def build_handoff_package(
             "mode": contract.mode,
         },
         "adapter_inventory": contract.adapter_discovery.get("available_adapters", []),
+        "artifact_paths": artifact_paths,
         "steps": steps,
     }
 
@@ -888,6 +920,7 @@ def build_handoff_package(
 def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
     queue: list[dict[str, Any]] = []
     ordinal = 1
+    artifact_paths = handoff_package.get("artifact_paths", {})
     for step in handoff_package.get("steps", []):
         execution_mode = step.get("execution_mode", "")
         if execution_mode == "anysearch_batch_search":
@@ -939,7 +972,9 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
                         "requires_network": True,
                         "consumes_artifact": "retained_item",
                         "produces_artifact": "verification_result",
+                        "output_file": step.get("primary_inputs", {}).get("verification_results_file", ""),
                         "success_signal": "task returns keep/downgrade/watch judgment with stronger evidence",
+                        "next_action_summary": "append normalized verification result into the shared verification-results file",
                     }
                 )
                 ordinal += 1
@@ -955,8 +990,10 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
                         "payload": step.get("artifacts", []),
                         "requires_network": False,
                         "consumes_artifact": "retained_item",
-                        "produces_artifact": "verification_notes",
-                        "success_signal": "each candidate is either confirmed or moved to continue tracking",
+                        "produces_artifact": "verification_results_file",
+                        "output_file": step.get("primary_inputs", {}).get("verification_results_file", ""),
+                        "success_signal": "each candidate is normalized into keep/downgrade/watch style verification results",
+                        "next_action_summary": "write the built-in verification judgments into the shared verification-results file",
                     }
                 )
             ordinal += 1
@@ -999,6 +1036,7 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
     return {
         "version": 1,
         "queue_length": len(queue),
+        "artifact_paths": artifact_paths,
         "queue": queue,
         "next_action_summary": next_action_summary,
     }
@@ -1076,6 +1114,7 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
     contract = build_contract(args)
     items = load_items(Path(args.items_file)) if args.items_file else None
     draft_file = Path(args.draft_file) if args.draft_file else None
+    artifact_paths = build_artifact_paths(Path(args.items_file) if args.items_file else None, draft_file)
     route = build_route_recommendation(contract)
     collect_plan = build_collect_execution_plan(contract)
     verify_plan = build_verify_execution_plan(contract, items) if items else {}
@@ -1086,7 +1125,8 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
         "collect_execution_plan": collect_plan,
         "verify_execution_plan": verify_plan,
         "polish_execution_plan": polish_plan,
-        "handoff_package": build_handoff_package(contract, collect_plan, verify_plan, polish_plan),
+        "artifact_paths": artifact_paths,
+        "handoff_package": build_handoff_package(contract, collect_plan, verify_plan, polish_plan, artifact_paths),
     }
     payload["execute_queue"] = build_execute_queue(payload["handoff_package"])
     print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -1097,10 +1137,11 @@ def cmd_execute(args: argparse.Namespace) -> int:
     contract = build_contract(args)
     items = load_items(Path(args.items_file)) if args.items_file else None
     draft_file = Path(args.draft_file) if args.draft_file else None
+    artifact_paths = build_artifact_paths(Path(args.items_file) if args.items_file else None, draft_file)
     collect_plan = build_collect_execution_plan(contract)
     verify_plan = build_verify_execution_plan(contract, items) if items else {}
     polish_plan = build_polish_execution_plan(contract, items, draft_file)
-    handoff = build_handoff_package(contract, collect_plan, verify_plan, polish_plan)
+    handoff = build_handoff_package(contract, collect_plan, verify_plan, polish_plan, artifact_paths)
     payload = {
         "contract_summary": {
             "topic_mix": contract.topic_mix,
@@ -1108,8 +1149,21 @@ def cmd_execute(args: argparse.Namespace) -> int:
             "format": contract.format,
             "audience": contract.audience,
         },
+        "artifact_paths": artifact_paths,
         "handoff_package": handoff,
         "execute_queue": build_execute_queue(handoff),
+        "verification_results_init_command_hint": (
+            f"python3 {Path(__file__).resolve()} verify-results --items-file {artifact_paths['items_file']} "
+            f"--output-file {artifact_paths['verification_results_file']}"
+            if artifact_paths["items_file"] and artifact_paths["verification_results_file"]
+            else ""
+        ),
+        "digest_command_hint": (
+            f"python3 {Path(__file__).resolve()} digest --items-file {artifact_paths['items_file']} "
+            f"--verification-results-file {artifact_paths['verification_results_file']}"
+            if artifact_paths["items_file"] and artifact_paths["verification_results_file"]
+            else ""
+        ),
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
@@ -1129,10 +1183,14 @@ def load_verification_results(path: Path) -> list[dict[str, Any]]:
             return data["results"]
         if isinstance(data.get("verification_results"), list):
             return data["verification_results"]
-        raise ValueError("verification results object must contain a results array")
+        raise ValueError(
+            "verification results object must contain a results or verification_results array"
+        )
     if isinstance(data, list):
         return data
-    raise ValueError("verification results must be a JSON array or object with results")
+    raise ValueError(
+        "verification results must be a JSON array or object with results or verification_results"
+    )
 
 
 def normalize_verification_result(result: dict[str, Any]) -> dict[str, Any]:
@@ -1145,6 +1203,23 @@ def normalize_verification_result(result: dict[str, Any]) -> dict[str, Any]:
         if value not in (None, "", []):
             normalized[field] = value
     return normalized
+
+
+def merge_verification_results(
+    existing_results: list[dict[str, Any]],
+    incoming_results: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    merged_by_title = {
+        result["title"]: normalize_verification_result(result)
+        for result in existing_results
+        if normalize_verification_result(result)["title"]
+    }
+    for result in incoming_results:
+        normalized = normalize_verification_result(result)
+        if not normalized["title"]:
+            continue
+        merged_by_title[normalized["title"]] = normalized
+    return list(merged_by_title.values())
 
 
 def build_verification_result_package(
@@ -1171,6 +1246,10 @@ def build_verification_result_package(
         "verification_results": normalized_results,
         "digest_overlay_ready_results": normalized_results,
     }
+
+
+def write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def render_sources(sources: Any) -> str:
@@ -1433,9 +1512,24 @@ def cmd_digest(args: argparse.Namespace) -> int:
 def cmd_verify_results(args: argparse.Namespace) -> int:
     items = load_items(Path(args.items_file))
     raw_results = load_verification_results(Path(args.results_file)) if args.results_file else None
+    package = build_verification_result_package(items, raw_results)
+
+    if args.output_file:
+        output_path = Path(args.output_file)
+        if args.merge and output_path.exists():
+            existing_results = load_verification_results(output_path)
+            merged_results = merge_verification_results(existing_results, package["results"])
+            package = build_verification_result_package(items, merged_results)
+        write_json(output_path, package)
+        package = {
+            **package,
+            "written_to": str(output_path),
+            "write_mode": "merge" if args.merge else "overwrite",
+        }
+
     print(
         json.dumps(
-            build_verification_result_package(items, raw_results),
+            package,
             ensure_ascii=False,
             indent=2,
         )
@@ -1496,6 +1590,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     verify_results_parser.add_argument("--items-file", required=True)
     verify_results_parser.add_argument("--results-file")
+    verify_results_parser.add_argument("--output-file")
+    verify_results_parser.add_argument("--merge", action="store_true")
     verify_results_parser.set_defaults(func=cmd_verify_results)
 
     polish_parser = subparsers.add_parser("polish", help="Build the polish-stage execution plan")

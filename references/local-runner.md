@@ -180,12 +180,19 @@ Examples:
 ```bash
 python3 scripts/standalone_runner.py verify-results --items-file items.json
 python3 scripts/standalone_runner.py verify-results --items-file items.json --results-file verification-results.json
+python3 scripts/standalone_runner.py verify-results --items-file items.json --output-file items.verification-results.json
+python3 scripts/standalone_runner.py verify-results --items-file items.json --results-file reviewer-pass.json --output-file items.verification-results.json --merge
 ```
 
 Use this command in two ways:
 
 1. without `--results-file`, to generate result templates for the current verify candidates
 2. with `--results-file`, to normalize deep-research or manual verification notes into a digest-ready package
+
+It can also write directly to the shared verification artifact path:
+
+1. `--output-file`: write the emitted package to disk
+2. `--merge`: if `--output-file` already exists, merge incoming normalized results by `title` instead of overwriting
 
 The output includes:
 
@@ -194,6 +201,8 @@ The output includes:
 3. `results`
 4. `verification_results`
 5. `digest_overlay_ready_results`
+6. optional `written_to`
+7. optional `write_mode`
 
 ### `polish`
 
@@ -272,6 +281,17 @@ The output includes:
 3. normalized fields: `order`, `phase`, `executor`, `action`, `target`, `command`, `payload`
 4. scheduling metadata: `requires_network`, `consumes_artifact`, `produces_artifact`, `success_signal`
 5. `next_action_summary` for the first runnable queue item
+6. `artifact_paths` with the shared output-path convention for later stages
+7. `digest_command_hint` so the executor can hand the retained items and shared verify file straight into `digest`
+8. `verification_results_init_command_hint` so the executor can initialize the shared verify file before appending judgments
+
+Current path convention:
+
+1. `items_file`: the retained-item JSON provided to `execute`
+2. `verification_results_file`: `<items-file-stem>.verification-results.json`
+3. `digest_output_file`: `<items-file-stem>.digest.txt` unless `--draft-file` is explicitly provided
+
+Verify queue items now also expose `output_file`, so multiple verification tasks can append normalized results into the same shared `verification_results_file`.
 
 ### `digest`
 
