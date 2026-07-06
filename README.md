@@ -64,9 +64,20 @@ English link: [Jump to English Overview](#english-overview)
 
 ### 工作模式
 
-- `standard mode`：默认模式，生成平衡型新闻简报
-- `full mode`：执行完整的收集、排序、验证和成稿流程
+- `full mode`：默认模式，执行完整的收集、排序、验证和成稿流程
+- `standard mode`：轻量模式，适合明确要求更快、更省步骤的场景
 - `minimal mode`：在检索受限时，优先重组用户已提供材料
+
+### 首次使用交互
+
+第一次使用时，skill 会先帮助用户把主题定清楚，再开始检索。尤其当用户提到“专项主题”但定义仍然偏宽泛时，会优先补全这些信息：
+
+1. 专项主题名称
+2. 关注范围，例如技术、政策、企业、项目或市场切片
+3. 中英文关键词、缩写、别名
+4. 地域范围
+5. 重点关注维度，例如政策、产品、安全、招投标、融资或研究
+6. 希望排除的相邻主题
 
 ### 工作流
 
@@ -149,9 +160,20 @@ If the user does not specify topics, the skill defaults to:
 
 ### Operating Modes
 
-- `standard mode`: default mode for a balanced digest
-- `full mode`: runs the complete collect-rank-verify-write workflow
+- `full mode`: default mode; runs the complete collect-rank-verify-write workflow
+- `standard mode`: lighter mode for explicitly faster or simpler runs
 - `minimal mode`: restructures user-provided material when retrieval is constrained
+
+### First-Use Interaction
+
+On the first use, the skill should resolve the user's topic design before retrieval begins. When a specialty topic is still vague, it should help the user refine:
+
+1. topic name
+2. scope
+3. Chinese and English keywords or aliases
+4. geography
+5. watch priorities such as policy, product, safety, financing, or bids
+6. exclusions
 
 ### Workflow
 

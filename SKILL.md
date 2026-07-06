@@ -1,20 +1,23 @@
 ---
 name: more-news-briefing
-version: 0.1.1
-description: Create recurring multi-topic news briefings with customizable cadence, topic mix, ranking, and source-backed summaries. Use when Codex needs to collect, deduplicate, rank, summarize, and prepare daily, weekly, or custom-cycle digests across general news, AI, politics, business, culture, sports, and user-defined subjects. This skill should work as a standalone workflow by default, and only treat other installed skills as optional enhancements.
+description: Create recurring multi-topic news briefings with customizable cadence, topic mix, ranking, verification, and source-backed summaries. Use when Codex needs to collect, deduplicate, rank, verify, summarize, and prepare daily, weekly, or custom-cycle digests across general news, AI, politics, business, culture, sports, and user-defined subjects. Default to full mode, which runs the complete collect-sort-verify-write workflow. On a user's first use, resolve the topic contract before search begins, and explicitly help the user choose broad themes or define specialty topics with enough scope, keywords, geography, and watch priorities to support repeatable monitoring. This skill should work as a standalone workflow by default, and only treat other installed skills as optional enhancements.
 ---
 
 # More News Briefing
 
 ## Overview
 
-Build a recurring news digest with an internal workflow for collection, filtering, ranking, summarization, and formatting. Default to a broad briefing that covers major general-interest topics plus any user-priority themes, then adapt the scope, cadence, and output format to the request.
+Build a recurring news digest with an internal workflow for collection, filtering, ranking, verification, summarization, and formatting. Default to a broad briefing that covers major general-interest topics plus any user-priority themes, then adapt the scope, cadence, and output format to the request.
+
+Before the first real retrieval pass, resolve whether this is the user's first use of the skill or the first time they are asking for a new specialty watchlist. If the topic mix is missing, vague, or only says things like `看下专项`, pause and complete the topic contract first.
 
 ## Default Operating Mode
 
 If the user does not specify a cadence, ask only if scheduling is the main task. Otherwise assume a one-off run that is compatible with future automation.
 
 Before collecting, normalize the request with the input contract in [input-contract.md](./references/input-contract.md). If the user gives a loose request like "做个今日简报", fill the missing fields with defaults and state those assumptions in the final output.
+
+If this looks like the user's first use, or the request introduces a new specialty topic, do a short topic-intake interaction before retrieval. Keep the intake compact, but do not skip specialty-topic clarification when the topic definition is still too loose to search or rank well.
 
 If the user does not specify topics, use this default mix:
 
@@ -32,6 +35,29 @@ If the user does not specify depth, produce a compact briefing:
 3. One or two sentences per item
 4. A short "why it matters" note for the highest-priority items
 
+## First-Use Topic Intake
+
+Use a short guided intake the first time the skill is used, or whenever the user asks for a new specialty watchlist that is still underspecified.
+
+Read [onboarding-template.md](./references/onboarding-template.md) before asking the first-use questions. Prefer the multiple-choice onboarding prompt there over free-form intake. Only ask for typed detail when the specialty topic is still too broad after the user makes selections.
+
+Cover these decisions in order:
+
+1. Choose the briefing shape: broad default mix, focused multi-topic mix, or specialty-only monitoring
+2. Confirm the primary themes the user wants tracked every run
+3. If a specialty topic exists, refine it until the search space is operational
+
+For specialty topics, explicitly collect enough detail to support stable retrieval and ranking:
+
+1. Topic label: what the user wants to call this watch topic
+2. Scope: devices, technology layer, policy track, market segment, companies, or projects
+3. Keywords and aliases: Chinese and English terms, abbreviations, brand names, and technical synonyms
+4. Geography: global, China, US, EU, or named markets
+5. Priority lens: policy, products, financing, safety, standards, bids, deployments, or research
+6. Exclusions: adjacent topics that should not be mixed in unless they become material
+
+If the user only gives a broad domain like `储能` or `充电`, do not silently lock that in as the final specialty definition. Offer a more complete formulation and let the user confirm or adjust it before search begins.
+
 ## Capability Modes
 
 Run this skill in one of three modes:
@@ -40,7 +66,7 @@ Run this skill in one of three modes:
 2. `standard mode`: Use only Codex's native retrieval and reasoning abilities
 3. `minimal mode`: If retrieval is constrained, reorganize supplied material into a ranked, source-backed briefing
 
-Default to `standard mode` unless the environment clearly supports a stronger path.
+Default to `full mode`. Only fall back to `standard mode` when the user explicitly asks for a lighter or faster run, or when the environment cannot support the complete retrieval and verification path. Use `minimal mode` only when search is constrained or the user mainly provided source material directly.
 
 ## Standalone Operation
 
@@ -121,6 +147,7 @@ Lock down four variables before collecting:
 2. Topic mix: default mix or user-specified weights
 3. Delivery format: plain digest, push-ready summary, or archive-friendly report
 4. Audience: personal skim, executive scan, research watchlist, or public-facing copy
+5. Mode: `full`, `standard`, or `minimal`
 
 If one or more variables are missing, make the smallest reasonable assumption and state it in the final output.
 

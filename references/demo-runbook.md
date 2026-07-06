@@ -24,20 +24,21 @@ specialty: user-priority domain if known
 depth: standard
 format: standard_digest
 audience: research
-mode: standard
+mode: full
 ```
 
 ## Operator sequence
 
 1. Resolve the contract with `input-contract.md`
-2. Pick topic buckets and draft 2 to 4 queries per bucket from `query-playbook.md`
-3. Run the `recent-scan pattern` first
-4. Run the `broad-search pattern` only after new items are isolated
-5. Merge duplicate events into canonical items
-6. Rank with `editorial-rubric.md`
-7. Verify high-impact items with `source-ladder.md`
-8. Draft with `output-templates.md`
-9. Run the final pass against `acceptance-checklist.md`
+2. If this is the first use or the specialty topic is vague, finish the first-use topic intake before retrieval
+3. Pick topic buckets and draft 2 to 4 queries per bucket from `query-playbook.md`
+4. Run the `recent-scan pattern` first
+5. Run the `broad-search pattern` only after new items are isolated
+6. Merge duplicate events into canonical items
+7. Rank with `editorial-rubric.md`
+8. Verify high-impact items with `source-ladder.md`
+9. Draft with `output-templates.md`
+10. Run the final pass against `acceptance-checklist.md`
 
 ## Stop conditions
 
@@ -64,5 +65,5 @@ Do not do these during a run:
 Use this prompt for a quick manual test:
 
 ```text
-Use $more-news-briefing in standard mode. Build a one-off standard digest for the last 7 days in concise Chinese. Cover AI, politics, business, culture, sports, plus one specialty bucket if the user has a known domain interest. Include sources, 来源级别, and 证据状态. State any inferred assumptions.
+Use $more-news-briefing in full mode. First resolve the topic contract and refine any specialty topic that is still vague. Then build a one-off standard digest for the last 7 days in concise Chinese. Cover AI, politics, business, culture, sports, plus one specialty bucket if the user has a known domain interest. Include sources, 来源级别, and 证据状态. State any inferred assumptions.
 ```
