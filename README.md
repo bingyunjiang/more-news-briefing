@@ -1,6 +1,6 @@
 # More News Briefing
 
-一次刷尽今日热点，高效工作一整天。  
+一次刷尽近期热点，高效工作一整天。  
 Scan the day in one pass, from headlines to chatter.
 
 [![Version](https://img.shields.io/badge/version-v0.1.1-2f6feb)](#release-notes)
@@ -90,37 +90,6 @@ English link: [Jump to English Overview](#english-overview)
 - “帮我整理成适合微信发送的长消息版资讯汇总”
 - “把我给你的素材整理成带来源的简报”
 
-## 仓库结构
-
-```text
-more-news-briefing/
-├── SKILL.md
-├── README.md
-├── LICENSE
-├── agents/
-│   └── openai.yaml
-└── references/
-    ├── acceptance-checklist.md
-    ├── anysearch-adapter-runbook.md
-    ├── demo-runbook.md
-    ├── editorial-rubric.md
-    ├── embedded-enhancements.md
-    ├── input-contract.md
-    ├── output-templates.md
-    ├── query-playbook.md
-    ├── retrieval-adapters.md
-    ├── source-ladder.md
-    └── standalone-operation.md
-```
-
-## 关键参考文件
-
-- [SKILL.md](./SKILL.md)：主技能定义
-- [references/input-contract.md](./references/input-contract.md)：输入归一化契约
-- [references/demo-runbook.md](./references/demo-runbook.md)：演示执行路径
-- [references/output-templates.md](./references/output-templates.md)：输出模板
-- [references/acceptance-checklist.md](./references/acceptance-checklist.md)：交付检查清单
-
 ## 版本说明
 
 ### v0.1.1
@@ -198,37 +167,6 @@ If the user does not specify topics, the skill defaults to:
 - `Standard Digest`: balanced daily or weekly roundup
 - `Analyst Watch`: research-heavy monitoring format
 - `Long Message Briefing`: chat-friendly format for WeChat or Feishu
-
-## Repository Structure
-
-```text
-more-news-briefing/
-├── SKILL.md
-├── README.md
-├── LICENSE
-├── agents/
-│   └── openai.yaml
-└── references/
-    ├── acceptance-checklist.md
-    ├── anysearch-adapter-runbook.md
-    ├── demo-runbook.md
-    ├── editorial-rubric.md
-    ├── embedded-enhancements.md
-    ├── input-contract.md
-    ├── output-templates.md
-    ├── query-playbook.md
-    ├── retrieval-adapters.md
-    ├── source-ladder.md
-    └── standalone-operation.md
-```
-
-## Key References
-
-- [SKILL.md](./SKILL.md): Main skill definition
-- [references/input-contract.md](./references/input-contract.md): Request normalization contract
-- [references/demo-runbook.md](./references/demo-runbook.md): Concrete execution path
-- [references/output-templates.md](./references/output-templates.md): Reusable digest layouts
-- [references/acceptance-checklist.md](./references/acceptance-checklist.md): Final quality checklist
 
 ## Release Notes
 
