@@ -1,10 +1,12 @@
 # More News Briefing
 
+一次刷尽今日热点，高效工作一整天。  
+Scan the day in one pass, from headlines to chatter.
+
 [![Version](https://img.shields.io/badge/version-v0.1.1-2f6feb)](#release-notes)
 [![License](https://img.shields.io/badge/license-MIT-1f883d)](./LICENSE)
 [![Type](https://img.shields.io/badge/type-AI%20Agent%20Skill-8250df)](#项目表头)
 [![Language](https://img.shields.io/badge/language-ZH%20%7C%20EN-f59e0b)](#中文说明)
-
 
 中文入口: [跳转到中文说明](#中文说明)  
 English entry: [Jump to English Overview](#english-overview)
