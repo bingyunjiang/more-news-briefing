@@ -41,6 +41,8 @@ Use a short guided intake the first time the skill is used, or whenever the user
 
 Read [onboarding-template.md](./references/onboarding-template.md) before asking the first-use questions. Prefer the multiple-choice onboarding prompt there over free-form intake. Only ask for typed detail when the specialty topic is still too broad after the user makes selections.
 
+Read [topic-enums.md](./references/topic-enums.md) when you need the canonical split between default recurring topics and specialty monitoring topics.
+
 Cover these decisions in order:
 
 1. Choose the briefing shape: broad default mix, focused multi-topic mix, or specialty-only monitoring
@@ -80,6 +82,8 @@ When external skills are unavailable, use this standalone route:
 4. Produce a source-backed digest with the internal templates
 
 Treat external skills as accelerators, not prerequisites.
+
+Account-gated or login-required sources are allowed when they materially improve the briefing. If a preferred source needs the user to log in, pause briefly, say why that source is worth using, and explicitly ask the user to complete login before continuing retrieval from that source.
 
 When you need concrete retrieval routes instead of generic guidance, read [retrieval-adapters.md](./references/retrieval-adapters.md).
 
@@ -141,13 +145,15 @@ Use this sequence when you need a runnable path instead of a general description
 
 ### 1. Define the briefing contract
 
-Lock down four variables before collecting:
+Lock down the core contract variables before collecting:
 
 1. Cadence: one-off, daily, weekly, or custom
 2. Topic mix: default mix or user-specified weights
 3. Delivery format: plain digest, push-ready summary, or archive-friendly report
 4. Audience: personal skim, executive scan, research watchlist, or public-facing copy
 5. Mode: `full`, `standard`, or `minimal`
+6. Source-role preference: discovery, verification, context, and watch balance when recurring monitoring matters
+7. Watchlists: company, institution, and community watchlists when recurring monitoring matters
 
 If one or more variables are missing, make the smallest reasonable assumption and state it in the final output.
 
@@ -170,6 +176,10 @@ Apply the `recent-scan pattern` first, then the `broad-search pattern`, before d
 Read [query-playbook.md](./references/query-playbook.md) before building queries for broad news sweeps, niche technology monitoring, or mixed Chinese-English search workflows.
 
 Read [source-ladder.md](./references/source-ladder.md) before deciding whether a source is strong enough to support a retained item.
+
+Read [source-design-patterns.md](./references/source-design-patterns.md) when the main weakness is source design rather than query wording, especially if you need a better mix of hotlists, official sources, community discussion, and specialty watchlists.
+
+Read [source-family-catalog.md](./references/source-family-catalog.md) when you need a more concrete source menu, including China hotlists, mainstream direct-reporting families, developer communities, official institutions, and specialty industrial source families.
 
 ### 3. Deduplicate and rank
 
@@ -386,6 +396,10 @@ Read [embedded-enhancements.md](./references/embedded-enhancements.md) when you 
 Read [demo-runbook.md](./references/demo-runbook.md) when you want a concrete one-off execution path, including a default sample run and stop conditions.
 
 Read [retrieval-adapters.md](./references/retrieval-adapters.md) when you want to borrow retrieval capability from other skills without making them hard dependencies.
+
+Read [source-design-patterns.md](./references/source-design-patterns.md) when you want reusable source-pool patterns borrowed from neighboring projects such as hotlist directories, community-signal enrichment, fallback routes, and recurring watchlists.
+
+Read [source-family-catalog.md](./references/source-family-catalog.md) when you want a ready-to-use family catalog for pairing discovery sources, verification sources, context sources, and recurring specialty watch sources.
 
 Read [anysearch-adapter-runbook.md](./references/anysearch-adapter-runbook.md) when you want a concrete `anysearch`-based first-pass retrieval workflow for broad multi-bucket briefings.
 

@@ -7,9 +7,10 @@ Use this reference when the core weakness is not writing or ranking, but getting
 Borrow retrieval capability in layers:
 
 1. `native web` for default broad coverage
-2. `search expansion skill` for higher recall
-3. `topic-specific retrieval skill` for specialty buckets
-4. `deep verification skill` only after ranking
+2. `hotlist or structured feed` for faster discovery
+3. `search expansion skill` for higher recall
+4. `topic-specific retrieval skill` for specialty buckets
+5. `deep verification skill` only after ranking
 
 Do not replace the whole workflow with another skill. Borrow collection strength, then return to this skill's ranking, evidence, and formatting rules.
 
@@ -49,7 +50,32 @@ Do not borrow from `anysearch`:
 2. Final digest structure
 3. Final evidence labeling
 
-### Route 3: specialty-topic retrieval
+### Route 3: hotlist and structured-feed collectors
+
+Use a hotlist-like collector when you need fast discovery rather than final proof.
+
+Good examples:
+
+1. Hacker News for builder attention
+2. GitHub Trending or release feeds for open-source momentum
+3. social or portal hotlists for China-topic awareness
+4. finance fast-news streams for market-moving headlines
+
+Borrow from them:
+
+1. speed of discovery
+2. stable field structure
+3. engagement signals such as score, rank, or comment count
+
+Do not borrow from them:
+
+1. final factual authority
+2. policy or safety proof
+3. capital-markets confirmation
+
+If a stronger structured source needs login, it is acceptable to use it after asking the user to sign in.
+
+### Route 4: specialty-topic retrieval
 
 Use a niche retrieval skill when the user's stable interest is more important than broad coverage.
 
@@ -64,8 +90,9 @@ Rule:
 1. Treat topic-specific output as candidate generation, not final truth
 2. Re-check retained claims with `source-ladder.md`
 3. Keep vendor or hype-heavy items out of the top block unless stronger evidence exists
+4. If the best specialty route is account-gated, tell the user why it is worth using and ask them to log in before relying on it
 
-### Route 4: HN-style structured scraper
+### Route 5: HN-style structured scraper
 
 Use a structured scraper such as `hackernews-frontpage` only for a narrow bucket like AI builder chatter or developer attention.
 
@@ -139,9 +166,10 @@ For each bucket, choose one collector and one verifier:
 
 Example:
 
-1. AI bucket: `anysearch` as collector, official company blog as verifier
-2. Politics bucket: native web as collector, government release as verifier
-3. Charging bucket: specialty charging skill as collector, regulator or company release as verifier
+1. AI bucket: HN-style or `anysearch` collector, official company blog or repo release as verifier
+2. Politics bucket: native web or hotlist collector, government release as verifier
+3. Charging bucket: specialty charging collector, regulator or company release as verifier
+4. Market bucket: fast-news collector, filing or exchange disclosure as verifier
 
 ## Minimal adoption path
 

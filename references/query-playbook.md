@@ -13,6 +13,13 @@ For each topic bucket:
 
 Prefer 2 to 4 strong queries per bucket over a long pile of weak ones.
 
+Do not rely only on search queries. For recurring work, pair your queries with at least one explicit source-entry style:
+
+1. `hotlist entry` — ranked or trending boards for fast discovery
+2. `official entry` — regulator, company, standards body, exchange, or institution page
+3. `community entry` — HN, GitHub, Reddit, or other practitioner-discussion source
+4. `watchlist entry` — named companies, projects, repos, ministries, or tickers
+
 ## Global query frames
 
 Use these wrappers across topics:
@@ -46,6 +53,12 @@ Use these wrappers across topics:
 1. `OpenAI Anthropic Google Meta Microsoft latest`
 2. `AI regulation White House EU China latest`
 
+### Community / watchlist entry
+
+1. `Hacker News AI open source this week`
+2. `GitHub release LLM agent RAG latest`
+3. `Reddit LocalLLaMA latest discussion`
+
 ## Embodied intelligence and robotics
 
 ### Core
@@ -65,6 +78,11 @@ Use these wrappers across topics:
 
 1. `Figure AI Tesla Optimus Unitree Agibot latest`
 2. `humanoid robotics supply chain latest`
+
+### Community / watchlist entry
+
+1. `GitHub robotics embodied AI release latest`
+2. `robotics subreddit humanoid discussion latest`
 
 ## High tech frontier
 
@@ -143,6 +161,11 @@ Use these wrappers across topics:
 
 1. `Fed ECB PBOC latest`
 2. `美联储 欧洲央行 央行 最新`
+
+### Hotlist / watchlist entry
+
+1. `market moving news flash latest`
+2. `top movers filing guidance latest`
 
 ## Capital markets - US equities
 
@@ -467,6 +490,11 @@ Use these wrappers across topics:
 1. `CATL BYD Tesla Sungrow Fluence latest storage`
 2. `宁德时代 比亚迪 阳光电源 储能 最新`
 
+### Community / watchlist entry
+
+1. `battery storage fire safety discussion latest`
+2. `grid storage project tender latest`
+
 ## Charging and EV charging
 
 ### Core
@@ -487,6 +515,11 @@ Use these wrappers across topics:
 1. `Tesla Supercharger NACS Ionity BP Pulse latest`
 2. `充电 运营商 政策 标准 最新`
 
+### Community / watchlist entry
+
+1. `GitHub OCPP ISO 15118 latest release`
+2. `charging operator deployment discussion latest`
+
 ## Power electronics and advanced energy tech
 
 ### Core
@@ -506,6 +539,11 @@ Use these wrappers across topics:
 
 1. `Infineon Wolfspeed onsemi STMicro latest SiC`
 2. `英飞凌 意法 安森美 碳化硅 最新`
+
+### Community / watchlist entry
+
+1. `power electronics conference release latest`
+2. `SiC GaN engineer discussion latest`
 
 ## Clean energy and mobility
 

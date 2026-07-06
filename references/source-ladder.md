@@ -26,6 +26,7 @@ If a claim touches regulation, capital markets, safety, scientific validity, or 
 1. Reputable secondary reporting that cites named sources or primary materials
 2. Established industry databases and research summaries
 3. Well-sourced trade media
+4. Curated community or platform signals when clearly separated from factual proof
 
 ### 仅作线索
 
@@ -33,6 +34,7 @@ If a claim touches regulation, capital markets, safety, scientific validity, or 
 2. Social media posts without corroboration
 3. Opinion pieces presented as if they were factual reporting
 4. Viral reposts and screenshot-only claims
+5. Hotlist rankings or engagement counts without underlying reporting
 
 ## Politics and policy
 
@@ -126,6 +128,7 @@ If a claim touches regulation, capital markets, safety, scientific validity, or 
 1. Research newsletters with source links
 2. Developer analysis that reproduces the result
 3. Trade press summaries
+4. Hacker News, Reddit, GitHub release notes, or practitioner discussions used as context rather than sole proof
 
 ### 仅作线索
 
@@ -204,12 +207,28 @@ If a claim touches regulation, capital markets, safety, scientific validity, or 
 1. Company presentations with cross-checking
 2. Industry associations, market summaries, and research houses
 3. Trade press with named sources
+4. Engineering community discussion, open-source protocol repositories, or conference-side signals used only as context
 
 ### 仅作线索
 
 1. Vendor marketing claims without project evidence
 2. Viral engineering claims with no datasheet, standard, or deployment reference
 3. Screenshots of slides with no source deck
+
+## Community and hotlist signals
+
+Treat these as context, attention, or early discovery tools unless they link back to stronger evidence.
+
+### 次选证据
+
+1. Platform-native release notes, repo release pages, or maintainer posts with inspectable artifacts
+2. High-signal community threads that clearly link to the underlying project, paper, filing, or product page
+
+### 仅作线索
+
+1. Hot-search boards and trending lists by themselves
+2. Upvote counts, likes, repost counts, or comment counts without source follow-up
+3. Community excitement detached from the underlying document or release
 
 ## Culture and society
 
