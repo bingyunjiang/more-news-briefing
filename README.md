@@ -44,21 +44,13 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 - 媒体、内容和运营团队：需要把素材快速整理成微信、飞书或内部播报可直接发送的格式
 - 行业跟踪用户：例如充电桩、储能、V2G、快充、无线充电、超级电容等专题监测
 
-### 3 分钟上手
+### 安装（Agent 安装提示句）
 
-这个仓库自带一个只依赖 Python 标准库的 runner，能把 skill 最核心的三段闭环跑通：
+把本仓库放入你的 AI Agent skills 目录（如 `~/.codex/skills/`），然后在对话中向大模型发送以下提示句即可激活：
 
-```bash
-python3 scripts/standalone_runner.py contract --specialty "charging / V2G / BESS"
-python3 scripts/standalone_runner.py queries --topic-mix default --specialty "charging / V2G / BESS"
-python3 scripts/standalone_runner.py digest --items-file items.json --audience executive
-```
+> "使用 $more-news-briefing，按默认主题做一个今日新闻简报。"
 
-对应关系很直接：
-
-- `contract`：把模糊需求收敛成可重复执行的 briefing contract
-- `queries`：按主题桶生成查询包，而不是临时手写搜索词
-- `digest`：把保留条目渲染成可直接交付的简报格式
+首次激活后，技能会自动引导你定义专项主题的范围、关键词和关注维度。后续直接提及 `$more-news-briefing` 即可按上次设定执行。
 
 
 ### 功能概览
@@ -69,24 +61,6 @@ python3 scripts/standalone_runner.py digest --items-file items.json --audience e
 - 完全独立可用：这个 skill 自己就能走通“收集-筛选-验证-输出”链路，不依赖其它 skill、插件或外部编排
 - 主流程完整内聚：检索扩展、候选合并、优先级排序、事实压缩和最终成稿都在同一套工作流里完成
 - 更适合交付而不是试验：内置输入契约、输出模板、验收清单和运行 runbook，适合直接产出日报、周报、研究跟踪或微信/飞书长消息版简报
-
-### 独立运行边界
-
-这个 skill 采用 `standalone-first` 设计：
-
-- 核心能力内置：输入合同归一化、默认查询生成、候选去重、证据分级、模板成稿
-- 外部 skill 可选：如果环境里有更强的检索或润色 skill，可以借用它们做增强，但不是主路径
-- 不整包复制其它 skill：只把这个 skill 真正必需的方法和最小实现保留在本仓库里，避免跨 skill 代码漂移
-
-如果确实需要“开箱即用”，也支持把少量可选 skill 快照随仓附带到 `references/skills/`。推荐只 vendoring 可选增强器，不 vendoring 整个主流程依赖。
-
-仓库内已经提供一个只依赖 Python 标准库的本地 runner：
-
-- `python3 scripts/standalone_runner.py contract`
-- `python3 scripts/standalone_runner.py queries --topic-mix default`
-- `python3 scripts/standalone_runner.py digest --items-file items.json`
-
-它不负责替代在线检索，而是把合同、查询规划和最终成稿这些核心流程收回到本 skill 内部。
 
 ### 为什么是这个 Skill
 
@@ -211,23 +185,14 @@ Most news-summary tools answer "what happened today." Real work usually needs mo
 - editorial, content, and ops teams preparing WeChat, Feishu, or internal distribution-ready updates
 - domain watchers tracking areas like charging, BESS, V2G, fast charging, wireless charging, or supercapacitors
 
-### Three-Minute Quick Start
+### Installation (Agent Activation Prompts)
 
-The repository includes a standard-library-only runner that proves the core workflow end to end:
+Place this repository into your AI Agent skills directory (e.g., `~/.codex/skills/`), then activate it by telling your agent:
 
-```bash
-python3 scripts/standalone_runner.py contract --specialty "charging / V2G / BESS"
-python3 scripts/standalone_runner.py queries --topic-mix default --specialty "charging / V2G / BESS"
-python3 scripts/standalone_runner.py digest --items-file items.json --audience executive
-```
+> "Use $more-news-briefing. Make a news digest with default topics in full mode."
 
-Each command owns one durable piece of the product workflow:
+On first use, the skill will guide you through defining specialty topic scope, keywords, and watch dimensions. After setup, simply mention `$more-news-briefing` to run with your saved configuration.
 
-- `contract`: turns a vague request into a reusable briefing contract
-- `queries`: emits grouped query packs instead of ad hoc search wording
-- `digest`: renders retained items into a delivery-ready briefing format
-
-If you want to turn this README into a more promotion-ready landing page, the repo also includes a three-image Xiaohei promo illustration pack with master locks and executable prompts at [assets/readme-xiaohei-scenes/README.md](/Users/Bing/.codex/skills/more-news-briefing/assets/readme-xiaohei-scenes/README.md:1).
 
 ### What It Does
 
@@ -237,24 +202,6 @@ If you want to turn this README into a more promotion-ready landing page, the re
 - Fully self-contained: it completes the collect-filter-verify-format loop on its own, without relying on companion skills, plugins, or external orchestration
 - Tighter workflow ownership: search expansion, candidate merging, prioritization, factual compression, and final briefing output all live inside one cohesive workflow
 - Built for delivery, not just exploration: it includes an input contract, output templates, acceptance checks, and runbooks so the result is ready for reporting or chat-based delivery
-
-### Standalone-First Boundary
-
-This skill is designed around a `standalone-first` boundary:
-
-- Core workflow stays local to this repository: contract resolution, query planning, deduplication, evidence labels, and final formatting
-- Other skills are optional accelerators, not hidden prerequisites
-- We do not bulk-copy whole external skills into this one; we only keep the minimum implementation this skill must own directly
-
-If zero-setup distribution matters, this repository can also ship selected optional skill snapshots under `references/skills/` with a manifest. Those snapshots stay optional and should not take ownership of the core workflow.
-
-The repository now includes a standard-library-only local runner:
-
-- `python3 scripts/standalone_runner.py contract`
-- `python3 scripts/standalone_runner.py queries --topic-mix default`
-- `python3 scripts/standalone_runner.py digest --items-file items.json`
-
-It does not replace live retrieval. It keeps the skill's core orchestration and output logic self-contained.
 
 ### Why This Skill
 
