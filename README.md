@@ -17,9 +17,8 @@ English entry: [Jump to English Overview](#english-overview)
 | 名称 | `more-news-briefing` |
 | 版本 | `v0.1.1` |
 | 类型 | AI Agent Skill / 新闻简报技能 |
-| 状态 | Active |
-| 适用场景 | 多主题新闻简报、日报/周报、研究跟踪、长消息汇总 |
-| 关键字索引 | `news briefing`, `digest`, `daily brief`, `weekly roundup`, `AI`, `politics`, `business`, `culture`, `sports`, `source-backed summaries`, `research watchlist`, `WeChat`, `Feishu`, `新闻简报`, `资讯汇总`, `日报`, `周报`, `多主题`, `AI与科技`, `政策`, `商业`, `文化`, `体育`, `来源追溯`, `研究监测` |
+| 场景 | 新闻简报 / 日报周报 / 研究跟踪 / 长消息汇总 |
+| 关键词 | `news briefing`, `digest`, `AI`, `policy`, `business`, `WeChat`, `Feishu`, `新闻简报`, `日报`, `周报`, `研究跟踪` |
 
 ## 中文说明
 
