@@ -6,7 +6,6 @@
 [![Language](https://img.shields.io/badge/language-ZH%20%7C%20EN-f59e0b)](#中文说明)
 [![Status](https://img.shields.io/badge/status-active-16a34a)](#notes)
 
-中文在前，英文在后。This README is bilingual, with Chinese first and English second.
 
 中文入口: [跳转到中文说明](#中文说明)  
 English entry: [Jump to English Overview](#english-overview)
@@ -26,9 +25,26 @@ English entry: [Jump to English Overview](#english-overview)
 
 - [中文说明](#中文说明)
 - [English Overview](#english-overview)
+- [Why This Skill](#why-this-skill)
+- [Design Principles](#design-principles)
 - [Repository Structure](#repository-structure)
 - [Key References](#key-references)
 - [Release Notes](#release-notes)
+
+## Why This Skill
+
+Most news-digest tools are good at either collecting links or polishing prose. `more-news-briefing` is designed to do the harder middle layer well: turn noisy, overlapping, multi-source current-affairs input into a ranked, readable, source-backed briefing that is ready to deliver.
+
+Compared with lightweight summarizers, it is built for breadth, prioritization, and repeatability. Compared with generic research workflows, it is optimized for digest production rather than open-ended exploration.
+
+## Design Principles
+
+- Source breadth before summary polish
+- Ranking before writing
+- Deduplication before narration
+- Delivery-ready structure over raw research notes
+- Standalone workflow over hidden dependencies
+- Stable output shape for repeated use
 
 ## 中文说明
 
@@ -83,6 +99,21 @@ English link: [Jump to English Overview](#english-overview)
 - “按 AI、政策、商业三个主题做周报”
 - “帮我整理成适合微信发送的长消息版资讯汇总”
 - “把我给你的素材整理成带来源的简报”
+
+### 为什么是这个 Skill
+
+很多资讯工具擅长“搜链接”，也有很多工具擅长“润色文案”，但真正难的是把多来源、跨主题、彼此重复的时事信息压缩成一个有排序、有判断、能直接发出去的简报。`more-news-briefing` 的价值就在这里。
+
+它不是把搜索结果简单堆起来，也不是把已有材料机械改写，而是把“信息收集、去重、判断优先级、压缩表达、稳定交付”串成一条完整工作流，更适合长期做日报、周报和专题跟踪。
+
+### 设计原则
+
+- 先保证信息覆盖面，再追求措辞润色
+- 先做优先级排序，再开始写摘要
+- 先去重合并，再组织叙述
+- 输出要能直接交付，而不是停留在研究笔记
+- 工作流必须独立完整，不能依赖隐性外部能力
+- 输出结构要稳定，方便重复执行和后续自动化
 
 ## English Overview
 
