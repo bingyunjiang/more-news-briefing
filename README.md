@@ -4,7 +4,6 @@
 [![License](https://img.shields.io/badge/license-MIT-1f883d)](./LICENSE)
 [![Type](https://img.shields.io/badge/type-AI%20Agent%20Skill-8250df)](#项目表头)
 [![Language](https://img.shields.io/badge/language-ZH%20%7C%20EN-f59e0b)](#中文说明)
-[![Status](https://img.shields.io/badge/status-active-16a34a)](#备注)
 
 
 中文入口: [跳转到中文说明](#中文说明)  
