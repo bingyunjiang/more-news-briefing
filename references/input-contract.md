@@ -29,6 +29,7 @@ Read [onboarding-template.md](./onboarding-template.md) before asking the intake
 Read [topic-enums.md](./topic-enums.md) when you need to classify the user's choices into default broad buckets versus specialty monitoring buckets.
 
 Read [source-family-catalog.md](./source-family-catalog.md) when you need to translate the user's preferences into source-role choices or recurring watchlists.
+Read [watchlist-template.md](./watchlist-template.md) when the user wants a recurring specialty briefing and needs a recommended starting watchlist for companies, institutions, and communities.
 
 Use a compact intake with two layers:
 

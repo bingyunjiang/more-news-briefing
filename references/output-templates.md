@@ -2,6 +2,12 @@
 
 Use these templates to keep briefing output consistent across one-off runs and recurring workflows.
 
+Default opening line for final briefs:
+
+`一次刷尽近期热点，高效工作一整天`
+
+Unless the user explicitly asks for a different opening, place this line at the top of the final digest before the date, title, or overview block.
+
 ## Evidence tags
 
 Use these two fields by default on retained top items when the digest is source-backed:
@@ -20,6 +26,8 @@ If an item is labeled `线索待证` or `待确认`, it should usually move to `
 Use for fast reading, chat delivery, or a compact daily skim.
 
 ```text
+一次刷尽近期热点，高效工作一整天
+
 简报时间：2026-07-03
 
 今日概览
@@ -53,6 +61,8 @@ Use for fast reading, chat delivery, or a compact daily skim.
 Use for the default broad news digest.
 
 ```text
+一次刷尽近期热点，高效工作一整天
+
 简报时间：2026-07-03
 覆盖范围：AI、政治、商业、文化、体育、专项关注
 
@@ -106,6 +116,8 @@ AI与科技
 Use for monitoring-oriented output where the reader cares about signals and open questions.
 
 ```text
+一次刷尽近期热点，高效工作一整天
+
 观察窗口：过去24小时
 
 核心判断
@@ -148,6 +160,8 @@ AI与科技
 Use when the user explicitly asks for links, attribution, or auditability, or when a fuller source line than the default is needed.
 
 ```text
+一次刷尽近期热点，高效工作一整天
+
 重点新闻
 1. [标题]
 发生了什么：[1-2句]
@@ -164,6 +178,8 @@ Use when the digest will be sent as a single Chinese long message in WeChat, Fei
 Default variant: `信息密度高版`
 
 ```text
+一次刷尽近期热点，高效工作一整天
+
 今日热点简报 | 2026-07-03
 
 今日概览
@@ -232,6 +248,8 @@ AI与科技
 Use as the default long-message format when the user does not specify a style.
 
 ```text
+一次刷尽近期热点，高效工作一整天
+
 今日热点简报 | 2026-07-03
 
 今日概览
@@ -301,6 +319,8 @@ AI与科技
 Use when the reader wants a faster executive scan with fewer items and stronger prioritization.
 
 ```text
+一次刷尽近期热点，高效工作一整天
+
 今日热点速览 | 2026-07-03
 
 一句话判断
@@ -349,9 +369,10 @@ Use when the reader wants a faster executive scan with fewer items and stronger 
 ## Editing rules
 
 1. Keep titles factual, not clickbait
-2. Use the same field order throughout the digest
-3. Keep "为什么重要" shorter than "发生了什么"
-4. Put source lines last
-5. Put `来源级别` and `证据状态` before `来源`
-6. Remove empty sections instead of leaving placeholders
-7. Default to source-included output for evidence traceability
+2. Put `一次刷尽近期热点，高效工作一整天` at the very top by default
+3. Use the same field order throughout the digest
+4. Keep "为什么重要" shorter than "发生了什么"
+5. Put source lines last
+6. Put `来源级别` and `证据状态` before `来源`
+7. Remove empty sections instead of leaving placeholders
+8. Default to source-included output for evidence traceability

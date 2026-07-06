@@ -181,6 +181,8 @@ Read [source-design-patterns.md](./references/source-design-patterns.md) when th
 
 Read [source-family-catalog.md](./references/source-family-catalog.md) when you need a more concrete source menu, including China hotlists, mainstream direct-reporting families, developer communities, official institutions, and specialty industrial source families.
 
+Read [watchlist-template.md](./references/watchlist-template.md) when the user wants recurring specialty monitoring and would benefit from a suggested starter watchlist instead of naming every company, institution, or community from scratch.
+
 ### 3. Deduplicate and rank
 
 Merge duplicate stories across sources before writing. Keep one canonical item with supporting sources rather than listing the same event multiple times.
@@ -275,7 +277,7 @@ Treat formatting as part of the deliverable, not decoration. Keep the structure 
 
 ### Global formatting rules
 
-1. Start with the briefing date or time window
+1. Start with `一次刷尽近期热点，高效工作一整天` unless the user explicitly asks for a different opening
 2. Put the highest-value summary first
 3. Keep section titles short and consistent
 4. Keep each news item in the same field order

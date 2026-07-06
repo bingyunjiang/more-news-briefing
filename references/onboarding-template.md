@@ -6,6 +6,7 @@ Prefer multiple-choice interaction over free-form writing. Ask the user to choos
 
 Read [topic-enums.md](./topic-enums.md) before presenting topic menus. Treat its `default topic enums` and `specialty topic enums` as the canonical menu source.
 Read [source-family-catalog.md](./source-family-catalog.md) when the user wants a repeatable specialty briefing and you need to resolve source-role preference or recurring watchlists.
+Read [watchlist-template.md](./watchlist-template.md) when the user wants a recurring specialty briefing and you need a suggested default watchlist skeleton.
 
 When writing the onboarding message, do not hand-maintain the topic menu inside this file. Render the menu by copying the current `Rendered menu block` sections from `topic-enums.md`.
 
@@ -34,6 +35,7 @@ C. 一个专项主题持续跟踪
 - 试验方法与测试验证 -> 测试标准 / 试验方法 / 可靠性验证 / 安全测试
 
 子方向一旦确定，回到 [source-family-catalog.md](./source-family-catalog.md) 里的 `Subtopic routing` 选择对应的 source family 组合。
+如果用户愿意定观察名单，再回到 [watchlist-template.md](./watchlist-template.md) 选对应子方向的默认名单骨架，让用户只做保留、删减或替换。
 
 4. 再选一下关注重点：
 {specialty priority enums rendered menu block}
@@ -130,6 +132,7 @@ source_roles:
 company_watchlist:
 institution_watchlist:
 community_watchlist:
+watchlist_source:
 ```
 
 Do not show this normalized block unless it helps the user confirm assumptions quickly.
