@@ -1,6 +1,6 @@
 # AnySearch Adapter Runbook
 
-Use this runbook when `more-news-briefing` chooses `anysearch` as the first-pass collector for a broad news digest.
+Use this runbook only when `more-news-briefing` explicitly chooses `anysearch` as an optional first-pass collector for a broad news digest.
 
 ## Goal
 
@@ -23,6 +23,8 @@ Then choose this runbook only if at least one of these is true:
 2. Native search snippets are too shallow
 3. You need parallel first-pass search
 4. You expect to extract article pages after discovery
+
+If none of these are true, stay on the skill's built-in standalone route.
 
 ## Local preflight
 

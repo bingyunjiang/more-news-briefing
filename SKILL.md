@@ -64,15 +64,25 @@ If the user only gives a broad domain like `储能` or `充电`, do not silently
 
 Run this skill in one of three modes:
 
-1. `full mode`: Use available enhancement skills for better retrieval, validation, or polish
+1. `full mode`: Run the complete built-in workflow first, then optionally borrow enhancement skills for better retrieval, validation, or polish
 2. `standard mode`: Use only Codex's native retrieval and reasoning abilities
 3. `minimal mode`: If retrieval is constrained, reorganize supplied material into a ranked, source-backed briefing
 
-Default to `full mode`. Only fall back to `standard mode` when the user explicitly asks for a lighter or faster run, or when the environment cannot support the complete retrieval and verification path. Use `minimal mode` only when search is constrained or the user mainly provided source material directly.
+Default to `full mode`. In this skill, `full mode` still means the built-in workflow owns the result. External helpers may widen recall or improve polish, but they do not own the contract, ranking, evidence, or final draft. Only fall back to `standard mode` when the user explicitly asks for a lighter or faster run, or when the environment cannot support the complete retrieval and verification path. Use `minimal mode` only when search is constrained or the user mainly provided source material directly.
 
 ## Standalone Operation
 
 This skill must be able to complete its core job without relying on any external skill.
+
+Treat the following as part of the skill's owned core, not borrowed behavior:
+
+1. Request normalization and assumption handling
+2. Query planning and bucket layout
+3. Candidate-item deduplication
+4. Evidence labeling and retention rules
+5. Output formatting and acceptance checks
+
+If local code support is useful, use the built-in runner documented in [local-runner.md](./references/local-runner.md).
 
 When external skills are unavailable, use this standalone route:
 
@@ -87,7 +97,7 @@ Account-gated or login-required sources are allowed when they materially improve
 
 When you need concrete retrieval routes instead of generic guidance, read [retrieval-adapters.md](./references/retrieval-adapters.md).
 
-When the preferred retrieval route is `anysearch`, read [anysearch-adapter-runbook.md](./references/anysearch-adapter-runbook.md) for a directly executable first-pass collection workflow.
+When the preferred retrieval route is `anysearch`, read [anysearch-adapter-runbook.md](./references/anysearch-adapter-runbook.md) for a directly executable first-pass collection workflow. This is an optional adapter, not the default dependency boundary for the skill.
 
 ## Internal Enhancement Patterns
 
@@ -111,6 +121,10 @@ If these skills are installed, they can accelerate the internal patterns above:
 5. Topic-specific retrieval skills can be used for specialty buckets if they are narrowly scoped and their evidence quality is checked before retention
 
 Do not assume these skills exist. If one is unavailable, continue with the built-in pattern that serves the same purpose.
+
+Do not bulk-import or conceptually merge another skill's whole codebase into this one during normal operation. Keep this skill's owned implementation compact and local, and use bridges only where the borrowed capability is clearly optional.
+
+If you need zero-setup portability for a user environment, you may ship selected optional skill snapshots inside `references/skills/` together with a manifest and license notes. Treat those vendored snapshots as local optional adapters, not as the core of this skill.
 
 Do not use `agent-reach` as the primary news collector. It can help find other agents, but it is not the main retrieval path for current affairs.
 

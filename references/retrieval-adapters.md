@@ -4,7 +4,9 @@ Use this reference when the core weakness is not writing or ranking, but getting
 
 ## Design rule
 
-Borrow retrieval capability in layers:
+This file describes optional adapters, not mandatory dependencies.
+
+Borrow retrieval capability in layers only after confirming the built-in route is insufficient:
 
 1. `native web` for default broad coverage
 2. `hotlist or structured feed` for faster discovery
@@ -178,4 +180,4 @@ If you only make one upgrade, make it this:
 1. Use `anysearch` for first-pass multi-bucket retrieval
 2. Keep all ranking and evidence rules inside `more-news-briefing`
 
-That is the highest-return upgrade with the lowest workflow distortion.
+That is the highest-return optional upgrade with the lowest workflow distortion.

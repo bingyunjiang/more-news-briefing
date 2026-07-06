@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "policy": {
+    "mode": "optional_snapshots_only",
+    "required_by_default": false,
+    "owner": "more-news-briefing",
+    "notes": [
+      "Vendored skills are optional local adapters.",
+      "Core contract, ranking, evidence, and final drafting stay inside more-news-briefing."
+    ]
+  },
+  "skills": [
+    {
+      "name": "anysearch",
+      "source_path": "/Users/Bing/.codex/skills/anysearch",
+      "snapshot_path": "references/skills/anysearch",
+      "bundled": true,
+      "role": "search expansion adapter",
+      "required_by_default": false,
+      "license_note": "Verify upstream license before copying files.",
+      "update_policy": "manual snapshot when interface changes"
+    },
+    {
+      "name": "deep-research",
+      "source_path": "/Users/Bing/.hermes/skills/deep-research",
+      "snapshot_path": "references/skills/deep-research",
+      "bundled": true,
+      "role": "deep verification adapter",
+      "required_by_default": false,
+      "license_note": "Verify upstream license before copying files.",
+      "update_policy": "manual snapshot when prompts or runbook change"
+    },
+    {
+      "name": "humanizer-zh",
+      "source_path": "/Users/Bing/.codex/skills/humanizer-zh",
+      "snapshot_path": "references/skills/humanizer-zh",
+      "bundled": true,
+      "role": "final polish adapter",
+      "required_by_default": false,
+      "license_note": "Verify upstream license before copying files.",
+      "update_policy": "manual snapshot when wording rules change"
+    }
+  ]
+}
