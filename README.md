@@ -1,7 +1,7 @@
 # More News Briefing
 
-一次刷尽近期热点，高效工作一整天。  
-Scan the day in one pass, from headlines to chatter.
+一次刷尽近期热点，高效工作一整天  
+Scan the day in one pass, from headlines to chatter
 
 [![Version](https://img.shields.io/badge/version-v0.1.1-2f6feb)](#release-notes)
 [![License](https://img.shields.io/badge/license-MIT-1f883d)](./LICENSE)
