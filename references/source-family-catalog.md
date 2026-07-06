@@ -312,6 +312,218 @@ Best use:
 3. “charging and storage watch”
 4. “weekly regulation brief”
 
+## Subtopic routing
+
+Use this section after the user has already chosen a broad specialty topic and then narrowed to a second-layer subtopic.
+
+For each subtopic, prefer one source-family stack instead of a random mix.
+
+### Energy and power
+
+#### `储能`
+
+1. `discovery`: specialty industrial trade sources + channelized media subfeeds
+2. `verification`: official and institutional sources
+3. `context`: mainstream direct-reporting outlets when large deployments or incidents break wider
+4. `watch`: company and project watchlists
+
+#### `充电 / 快充`
+
+1. `discovery`: specialty industrial trade sources + channelized media subfeeds
+2. `verification`: official and institutional sources
+3. `context`: developer-attention communities when protocols or software stacks matter
+4. `watch`: operator, standard, and project watchlists
+
+#### `V2G / 车网互动`
+
+1. `discovery`: official and institutional sources + specialty industrial trade sources
+2. `verification`: official and institutional sources
+3. `context`: developer-attention communities and community discussion when protocol, EMS, or aggregator tooling matters
+4. `watch`: institution and standards watchlists
+
+#### `EMS / 能源管理`
+
+1. `discovery`: specialty industrial trade sources + developer-attention communities
+2. `verification`: official and institutional sources
+3. `context`: community discussion and narrow editorial pipelines
+4. `watch`: company, repo, and standards watchlists
+
+#### `电力市场`
+
+1. `discovery`: realtime market and fast-news streams + official and institutional sources
+2. `verification`: official and institutional sources
+3. `context`: mainstream direct-reporting outlets
+4. `watch`: regulator, exchange, and market-platform watchlists
+
+#### `电力电子 / 逆变器`
+
+1. `discovery`: specialty industrial trade sources + channelized media subfeeds
+2. `verification`: official and institutional sources
+3. `context`: developer-attention communities when open hardware, control software, or standards implementation matters
+4. `watch`: company and conference watchlists
+
+#### `SiC / GaN`
+
+1. `discovery`: specialty industrial trade sources + channelized media subfeeds
+2. `verification`: official and institutional sources
+3. `context`: community discussion and conference-heavy coverage
+4. `watch`: company, fab, and research-lab watchlists
+
+### AI and robotics
+
+#### `大模型技术`
+
+1. `discovery`: developer-attention and builder communities + mainstream direct-reporting outlets
+2. `verification`: official and institutional sources
+3. `context`: community discussion and narrow editorial pipelines
+4. `watch`: lab, company, repo, and benchmark watchlists
+
+#### `AI Agent / 工具链`
+
+1. `discovery`: developer-attention and builder communities
+2. `verification`: official repo-release, product, or company sources
+3. `context`: community discussion sources
+4. `watch`: repo and maintainer watchlists
+
+#### `机器人 / 具身智能`
+
+1. `discovery`: mainstream direct-reporting outlets + specialty industrial trade sources
+2. `verification`: official and institutional sources
+3. `context`: developer-attention communities and community discussion
+4. `watch`: company, lab, and repo watchlists
+
+#### `开源模型与社区`
+
+1. `discovery`: developer-attention and builder communities
+2. `verification`: official model, repo-release, or lab sources
+3. `context`: community discussion sources
+4. `watch`: repo and forum watchlists
+
+### Simulation and digital twin
+
+#### `多物理场仿真`
+
+1. `discovery`: specialty industrial trade sources + official and institutional sources
+2. `verification`: official and institutional sources
+3. `context`: community discussion and narrow editorial pipelines
+4. `watch`: vendor, lab, and conference watchlists
+
+#### `电磁 / 热 / 结构仿真`
+
+1. `discovery`: specialty industrial trade sources
+2. `verification`: official and institutional sources
+3. `context`: community discussion sources
+4. `watch`: vendor, lab, and conference watchlists
+
+#### `系统级仿真`
+
+1. `discovery`: specialty industrial trade sources + channelized media subfeeds
+2. `verification`: official and institutional sources
+3. `context`: developer-attention communities when model-based tooling is relevant
+4. `watch`: platform and research watchlists
+
+#### `数字孪生平台`
+
+1. `discovery`: specialty industrial trade sources + mainstream direct-reporting outlets
+2. `verification`: official and institutional sources
+3. `context`: community discussion and narrow editorial pipelines
+4. `watch`: platform, project, and standards watchlists
+
+#### `实时仿真 / HIL`
+
+1. `discovery`: specialty industrial trade sources + channelized media subfeeds
+2. `verification`: official and institutional sources
+3. `context`: community discussion sources
+4. `watch`: vendor, lab, and test-platform watchlists
+
+### Thermal management
+
+#### `液冷`
+
+1. `discovery`: specialty industrial trade sources + channelized media subfeeds
+2. `verification`: official and institutional sources
+3. `context`: mainstream direct-reporting outlets for large deployments
+4. `watch`: company and project watchlists
+
+#### `风冷`
+
+1. `discovery`: specialty industrial trade sources
+2. `verification`: official and institutional sources
+3. `context`: community discussion sources
+4. `watch`: company and product watchlists
+
+#### `热界面材料`
+
+1. `discovery`: specialty industrial trade sources + channelized media subfeeds
+2. `verification`: official and institutional sources
+3. `context`: research and conference coverage
+4. `watch`: supplier and lab watchlists
+
+#### `热设计与热仿真`
+
+1. `discovery`: specialty industrial trade sources + simulation-related watch sources
+2. `verification`: official and institutional sources
+3. `context`: community discussion and narrow editorial pipelines
+4. `watch`: vendor, lab, and platform watchlists
+
+#### `电池热管理`
+
+1. `discovery`: specialty industrial trade sources + automotive subfeeds
+2. `verification`: official and institutional sources
+3. `context`: mainstream direct-reporting outlets for incidents and recalls
+4. `watch`: OEM, supplier, and project watchlists
+
+#### `功率器件散热`
+
+1. `discovery`: specialty industrial trade sources + semiconductor/electronics subfeeds
+2. `verification`: official and institutional sources
+3. `context`: conference and engineering-community discussion
+4. `watch`: supplier, lab, and product watchlists
+
+### Test methods and validation
+
+#### `测试标准`
+
+1. `discovery`: official and institutional sources
+2. `verification`: official and institutional sources
+3. `context`: specialty industrial trade sources
+4. `watch`: standards-body and association watchlists
+
+#### `试验方法`
+
+1. `discovery`: official and institutional sources + specialty industrial trade sources
+2. `verification`: official and institutional sources
+3. `context`: community discussion and narrow editorial pipelines
+4. `watch`: lab, method, and conference watchlists
+
+#### `可靠性验证`
+
+1. `discovery`: specialty industrial trade sources + channelized media subfeeds
+2. `verification`: official and institutional sources
+3. `context`: research and conference coverage
+4. `watch`: lab, supplier, and standard watchlists
+
+#### `安全测试`
+
+1. `discovery`: official and institutional sources + mainstream direct-reporting outlets
+2. `verification`: official and institutional sources
+3. `context`: specialty industrial trade sources
+4. `watch`: regulator, lab, and incident-tracking watchlists
+
+#### `台架 / HIL / 实验平台`
+
+1. `discovery`: specialty industrial trade sources + developer-attention communities
+2. `verification`: official and institutional sources
+3. `context`: community discussion sources
+4. `watch`: platform, lab, and vendor watchlists
+
+#### `标定与测量方法`
+
+1. `discovery`: specialty industrial trade sources + official and institutional sources
+2. `verification`: official and institutional sources
+3. `context`: research and engineering-community discussion
+4. `watch`: lab, instrument, and standard watchlists
+
 ## Recommended defaults for `more-news-briefing`
 
 ### Broad digest

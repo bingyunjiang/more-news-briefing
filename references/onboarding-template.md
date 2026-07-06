@@ -33,6 +33,8 @@ C. 一个专项主题持续跟踪
 - 散热与热管理 -> 液冷 / 风冷 / 电池热管理 / 功率器件散热
 - 试验方法与测试验证 -> 测试标准 / 试验方法 / 可靠性验证 / 安全测试
 
+子方向一旦确定，回到 [source-family-catalog.md](./source-family-catalog.md) 里的 `Subtopic routing` 选择对应的 source family 组合。
+
 4. 再选一下关注重点：
 {specialty priority enums rendered menu block}
 
