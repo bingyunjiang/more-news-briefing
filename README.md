@@ -2,49 +2,24 @@
 
 [![Version](https://img.shields.io/badge/version-v0.1.1-2f6feb)](#release-notes)
 [![License](https://img.shields.io/badge/license-MIT-1f883d)](./LICENSE)
-[![Type](https://img.shields.io/badge/type-AI%20Agent%20Skill-8250df)](#header)
+[![Type](https://img.shields.io/badge/type-AI%20Agent%20Skill-8250df)](#项目表头)
 [![Language](https://img.shields.io/badge/language-ZH%20%7C%20EN-f59e0b)](#中文说明)
-[![Status](https://img.shields.io/badge/status-active-16a34a)](#notes)
+[![Status](https://img.shields.io/badge/status-active-16a34a)](#备注)
 
 
 中文入口: [跳转到中文说明](#中文说明)  
 English entry: [Jump to English Overview](#english-overview)
 
-## Header
+## 项目表头
 
-| Field | Content |
+| 字段 | 内容 |
 |---|---|
-| Name | `more-news-briefing` |
-| Version | `v0.1.1` |
-| Type | AI Agent Skill / 新闻简报技能 |
-| Status | Active |
-| Best For | 多主题新闻简报、日报/周报、研究跟踪、长消息汇总 |
-| Keyword Index | `news briefing`, `digest`, `daily brief`, `weekly roundup`, `AI`, `politics`, `business`, `culture`, `sports`, `source-backed summaries`, `research watchlist`, `WeChat`, `Feishu`, `新闻简报`, `资讯汇总`, `日报`, `周报`, `多主题`, `AI与科技`, `政策`, `商业`, `文化`, `体育`, `来源追溯`, `研究监测` |
-
-## Quick Links
-
-- [中文说明](#中文说明)
-- [English Overview](#english-overview)
-- [Why This Skill](#why-this-skill)
-- [Design Principles](#design-principles)
-- [Repository Structure](#repository-structure)
-- [Key References](#key-references)
-- [Release Notes](#release-notes)
-
-## Why This Skill
-
-Most news-digest tools are good at either collecting links or polishing prose. `more-news-briefing` is designed to do the harder middle layer well: turn noisy, overlapping, multi-source current-affairs input into a ranked, readable, source-backed briefing that is ready to deliver.
-
-Compared with lightweight summarizers, it is built for breadth, prioritization, and repeatability. Compared with generic research workflows, it is optimized for digest production rather than open-ended exploration.
-
-## Design Principles
-
-- Source breadth before summary polish
-- Ranking before writing
-- Deduplication before narration
-- Delivery-ready structure over raw research notes
-- Standalone workflow over hidden dependencies
-- Stable output shape for repeated use
+| 名称 | `more-news-briefing` |
+| 版本 | `v0.1.1` |
+| 类型 | AI Agent Skill / 新闻简报技能 |
+| 状态 | Active |
+| 适用场景 | 多主题新闻简报、日报/周报、研究跟踪、长消息汇总 |
+| 关键字索引 | `news briefing`, `digest`, `daily brief`, `weekly roundup`, `AI`, `politics`, `business`, `culture`, `sports`, `source-backed summaries`, `research watchlist`, `WeChat`, `Feishu`, `新闻简报`, `资讯汇总`, `日报`, `周报`, `多主题`, `AI与科技`, `政策`, `商业`, `文化`, `体育`, `来源追溯`, `研究监测` |
 
 ## 中文说明
 
@@ -60,6 +35,21 @@ English link: [Jump to English Overview](#english-overview)
 - 完全独立可用：这个 skill 自己就能走通“收集-筛选-验证-输出”链路，不依赖其它 skill、插件或外部编排
 - 主流程完整内聚：检索扩展、候选合并、优先级排序、事实压缩和最终成稿都在同一套工作流里完成
 - 更适合交付而不是试验：内置输入契约、输出模板、验收清单和运行 runbook，适合直接产出日报、周报、研究跟踪或微信/飞书长消息版简报
+
+### 为什么是这个 Skill
+
+很多资讯工具擅长“搜链接”，也有很多工具擅长“润色文案”，但真正难的是把多来源、跨主题、彼此重复的时事信息压缩成一个有排序、有判断、能直接发出去的简报。`more-news-briefing` 的价值就在这里。
+
+它不是把搜索结果简单堆起来，也不是把已有材料机械改写，而是把“信息收集、去重、判断优先级、压缩表达、稳定交付”串成一条完整工作流，更适合长期做日报、周报和专题跟踪。
+
+### 设计原则
+
+- 先保证信息覆盖面，再追求措辞润色
+- 先做优先级排序，再开始写摘要
+- 先去重合并，再组织叙述
+- 输出要能直接交付，而不是停留在研究笔记
+- 工作流必须独立完整，不能依赖隐性外部能力
+- 输出结构要稳定，方便重复执行和后续自动化
 
 ### 默认主题
 
@@ -100,20 +90,52 @@ English link: [Jump to English Overview](#english-overview)
 - “帮我整理成适合微信发送的长消息版资讯汇总”
 - “把我给你的素材整理成带来源的简报”
 
-### 为什么是这个 Skill
+## 仓库结构
 
-很多资讯工具擅长“搜链接”，也有很多工具擅长“润色文案”，但真正难的是把多来源、跨主题、彼此重复的时事信息压缩成一个有排序、有判断、能直接发出去的简报。`more-news-briefing` 的价值就在这里。
+```text
+more-news-briefing/
+├── SKILL.md
+├── README.md
+├── LICENSE
+├── agents/
+│   └── openai.yaml
+└── references/
+    ├── acceptance-checklist.md
+    ├── anysearch-adapter-runbook.md
+    ├── demo-runbook.md
+    ├── editorial-rubric.md
+    ├── embedded-enhancements.md
+    ├── input-contract.md
+    ├── output-templates.md
+    ├── query-playbook.md
+    ├── retrieval-adapters.md
+    ├── source-ladder.md
+    └── standalone-operation.md
+```
 
-它不是把搜索结果简单堆起来，也不是把已有材料机械改写，而是把“信息收集、去重、判断优先级、压缩表达、稳定交付”串成一条完整工作流，更适合长期做日报、周报和专题跟踪。
+## 关键参考文件
 
-### 设计原则
+- [SKILL.md](./SKILL.md)：主技能定义
+- [references/input-contract.md](./references/input-contract.md)：输入归一化契约
+- [references/demo-runbook.md](./references/demo-runbook.md)：演示执行路径
+- [references/output-templates.md](./references/output-templates.md)：输出模板
+- [references/acceptance-checklist.md](./references/acceptance-checklist.md)：交付检查清单
 
-- 先保证信息覆盖面，再追求措辞润色
-- 先做优先级排序，再开始写摘要
-- 先去重合并，再组织叙述
-- 输出要能直接交付，而不是停留在研究笔记
-- 工作流必须独立完整，不能依赖隐性外部能力
-- 输出结构要稳定，方便重复执行和后续自动化
+## 版本说明
+
+### v0.1.1
+
+- 新增 `SKILL.md` 与 `agents/openai.yaml` 版本号
+- 新增中英双语 `README.md`
+- 新增 GitHub 风格徽章、关键词索引、快速导航与跳转链接
+- 新增标准 MIT `LICENSE`
+
+## 备注
+
+- 当前发布版本为 `v0.1.1`
+- 该技能定位为独立可运行的完整新闻简报 skill
+
+---
 
 ## English Overview
 
@@ -129,6 +151,21 @@ English link: [Jump to English Overview](#english-overview)
 - Fully self-contained: it completes the collect-filter-verify-format loop on its own, without relying on companion skills, plugins, or external orchestration
 - Tighter workflow ownership: search expansion, candidate merging, prioritization, factual compression, and final briefing output all live inside one cohesive workflow
 - Built for delivery, not just exploration: it includes an input contract, output templates, acceptance checks, and runbooks so the result is ready for reporting or chat-based delivery
+
+### Why This Skill
+
+Many news tools are good at collecting links, and many writing tools are good at polishing prose. The harder job is turning overlapping, cross-topic, multi-source current-affairs input into a ranked, readable briefing that can actually be delivered. That is the core value of `more-news-briefing`.
+
+It is not a raw search-result dump, and it is not a mechanical rewrite layer. It is a complete workflow that connects collection, deduplication, prioritization, compression, and stable delivery into one reusable briefing system.
+
+### Design Principles
+
+- Source breadth before summary polish
+- Ranking before writing
+- Deduplication before narration
+- Delivery-ready structure over raw research notes
+- Standalone workflow over hidden dependencies
+- Stable output shape for repeated use
 
 ### Default Topic Mix
 
@@ -187,20 +224,16 @@ more-news-briefing/
 
 ## Key References
 
-- [SKILL.md](./SKILL.md): 主技能定义 / Main skill definition
-- [references/input-contract.md](./references/input-contract.md): 输入归一化契约 / Request normalization contract
-- [references/demo-runbook.md](./references/demo-runbook.md): 演示执行路径 / Concrete execution path
-- [references/output-templates.md](./references/output-templates.md): 输出模板 / Reusable digest layouts
-- [references/acceptance-checklist.md](./references/acceptance-checklist.md): 交付检查清单 / Final quality checklist
+- [SKILL.md](./SKILL.md): Main skill definition
+- [references/input-contract.md](./references/input-contract.md): Request normalization contract
+- [references/demo-runbook.md](./references/demo-runbook.md): Concrete execution path
+- [references/output-templates.md](./references/output-templates.md): Reusable digest layouts
+- [references/acceptance-checklist.md](./references/acceptance-checklist.md): Final quality checklist
 
 ## Release Notes
 
 ### v0.1.1
 
-- 新增 `SKILL.md` 与 `agents/openai.yaml` 版本号
-- 新增中英双语 `README.md`
-- 新增 GitHub 风格徽章、关键词索引、快速导航与跳转链接
-- 新增标准 MIT `LICENSE`
 - Added version metadata to `SKILL.md` and `agents/openai.yaml`
 - Added a bilingual `README.md`
 - Added GitHub-style badges, keyword indexing, quick navigation, and anchor links
@@ -208,7 +241,5 @@ more-news-briefing/
 
 ## Notes
 
-- 当前发布版本为 `v0.1.1`
 - The current repository release is `v0.1.1`
-- 该技能定位为独立可运行的完整新闻简报 skill
 - This skill is designed as a complete standalone news-briefing workflow
