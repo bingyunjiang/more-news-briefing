@@ -1,0 +1,241 @@
+:root {
+  --bg: #eef3ff;
+  --panel: rgba(255, 255, 255, 0.84);
+  --panel-strong: rgba(255, 255, 255, 0.96);
+  --line: rgba(35, 61, 125, 0.12);
+  --line-strong: rgba(35, 61, 125, 0.24);
+  --text: #15213f;
+  --muted: #5e6f96;
+  --accent: #2f63ff;
+  --accent-soft: rgba(47, 99, 255, 0.12);
+  --shadow: 0 32px 80px rgba(40, 66, 130, 0.14);
+  --font-sans: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(123, 166, 255, 0.45), transparent 32%),
+    radial-gradient(circle at top right, rgba(112, 228, 215, 0.28), transparent 26%),
+    linear-gradient(180deg, #f7faff 0%, var(--bg) 100%);
+}
+
+.poster-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+}
+
+.poster {
+  position: relative;
+  width: min(100%, 960px);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 36px;
+  padding: 58px 56px 44px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.9)),
+    var(--panel);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: 24px;
+}
+
+.poster::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  pointer-events: none;
+}
+
+.poster__glow {
+  position: absolute;
+  z-index: 0;
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.poster__glow--left {
+  top: -60px;
+  left: -40px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(47, 99, 255, 0.2), transparent 68%);
+}
+
+.poster__glow--right {
+  right: -80px;
+  bottom: 110px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(96, 221, 203, 0.18), transparent 70%);
+}
+
+.poster > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hero__eyebrow,
+.focus__label,
+.action__label,
+.footer__label {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hero__title {
+  margin: 0;
+  max-width: 12ch;
+  font-size: clamp(40px, 5vw, 68px);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.hero__tagline {
+  margin: 18px 0 0;
+  font-size: clamp(19px, 2vw, 24px);
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.overview,
+.focus,
+.footer {
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+}
+
+.overview {
+  border-radius: 24px;
+  padding: 24px 26px;
+}
+
+.overview__copy,
+.focus__text,
+.footer__link {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.65;
+}
+
+.overview__brand {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.highlight-card,
+.action {
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 249, 255, 0.92));
+}
+
+.highlight-card {
+  min-height: 160px;
+  padding: 22px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.highlight-card__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.highlight-card__text {
+  margin: 20px 0 0;
+  font-size: 24px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.focus {
+  border-radius: 22px;
+  padding: 20px 24px 22px;
+}
+
+.action {
+  padding: 24px 26px 28px;
+  border-color: var(--line-strong);
+  background:
+    linear-gradient(135deg, rgba(47, 99, 255, 0.08), rgba(96, 221, 203, 0.06)),
+    var(--panel-strong);
+}
+
+.action__cta {
+  margin: 0;
+  font-size: clamp(24px, 2.3vw, 32px);
+  line-height: 1.4;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.action__cta span {
+  color: var(--accent);
+}
+
+.footer {
+  border-radius: 20px;
+  padding: 18px 22px;
+}
+
+@media (max-width: 900px) {
+  .poster {
+    padding: 44px 28px 28px;
+    aspect-ratio: auto;
+  }
+
+  .highlights {
+    grid-template-columns: 1fr;
+  }
+
+  .highlight-card {
+    min-height: 132px;
+  }
+
+  .highlight-card__text {
+    font-size: 21px;
+  }
+
+  .overview__copy,
+  .focus__text,
+  .footer__link {
+    font-size: 17px;
+  }
+}
