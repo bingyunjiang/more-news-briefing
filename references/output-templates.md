@@ -2,6 +2,8 @@
 
 Use these templates to keep briefing output consistent across one-off runs and recurring workflows.
 
+All final briefs should be delivered in Markdown by default so they can be pasted directly into Feishu, WeChat, or similar chat tools without reformatting. Prefer headings, numbered lists, and flat bullets over raw plain-text blocks.
+
 Default opening line for final briefs:
 
 `一次刷尽近期热点，高效工作一整天`
@@ -25,15 +27,16 @@ If an item is labeled `线索待证` or `待确认`, it should usually move to `
 
 Use for fast reading, chat delivery, or a compact daily skim.
 
-```text
+```md
 一次刷尽近期热点，高效工作一整天
 
-简报时间：2026-07-03
+## 简报时间
+2026-07-03
 
-今日概览
+## 今日概览
 [2-4句总览，直接说最重要的变化，不要铺垫]
 
-重点新闻
+## 重点新闻
 1. [标题]
 发生了什么：[一句话]
 为什么重要：[一句话]
@@ -60,16 +63,19 @@ Use for fast reading, chat delivery, or a compact daily skim.
 
 Use for the default broad news digest.
 
-```text
+```md
 一次刷尽近期热点，高效工作一整天
 
-简报时间：2026-07-03
-覆盖范围：AI、政治、商业、文化、体育、专项关注
+## 简报时间
+2026-07-03
 
-今日概览
+## 覆盖范围
+AI、政治、商业、文化、体育、专项关注
+
+## 今日概览
 [2-4句总览]
 
-重点新闻
+## 重点新闻
 1. [标题]
 发生了什么：[1-2句]
 为什么重要：[1句]
@@ -84,29 +90,29 @@ Use for the default broad news digest.
 证据状态：[交叉验证中]
 来源：[媒体A]、[媒体B]
 
-分主题速览
+## 分主题速览
 
-AI与科技
-- [标题]：[一句话]
-- [标题]：[一句话]
-
-政治与政策
+### AI与科技
 - [标题]：[一句话]
 - [标题]：[一句话]
 
-商业与市场
+### 政治与政策
+- [标题]：[一句话]
 - [标题]：[一句话]
 
-文化与社会
+### 商业与市场
 - [标题]：[一句话]
 
-体育
+### 文化与社会
 - [标题]：[一句话]
 
-专项关注
+### 体育
 - [标题]：[一句话]
 
-继续跟踪
+### 专项关注
+- [标题]：[一句话]
+
+## 继续跟踪
 - [正在发酵但还不稳定的主题]
 - [需要下一个周期继续确认的主题]
 ```
@@ -115,15 +121,16 @@ AI与科技
 
 Use for monitoring-oriented output where the reader cares about signals and open questions.
 
-```text
+```md
 一次刷尽近期热点，高效工作一整天
 
-观察窗口：过去24小时
+## 观察窗口
+过去24小时
 
-核心判断
+## 核心判断
 [2-4句，概括最值得注意的变化]
 
-高优先级项目
+## 高优先级项目
 1. [标题]
 发生了什么：[1-2句]
 为什么重要：[1句]
@@ -140,17 +147,18 @@ Use for monitoring-oriented output where the reader cares about signals and open
 需要确认：[1句，可选]
 来源：[媒体A]、[媒体B]
 
-主题观察
-AI与科技
+## 主题观察
+
+### AI与科技
 - [信号]
 
-政治与政策
+### 政治与政策
 - [信号]
 
-商业与市场
+### 商业与市场
 - [信号]
 
-继续跟踪
+## 继续跟踪
 - [事件]
 - [事件]
 ```
@@ -159,10 +167,10 @@ AI与科技
 
 Use when the user explicitly asks for links, attribution, or auditability, or when a fuller source line than the default is needed.
 
-```text
+```md
 一次刷尽近期热点，高效工作一整天
 
-重点新闻
+## 重点新闻
 1. [标题]
 发生了什么：[1-2句]
 为什么重要：[1句]
@@ -177,15 +185,15 @@ Use when the digest will be sent as a single Chinese long message in WeChat, Fei
 
 Default variant: `信息密度高版`
 
-```text
+```md
 一次刷尽近期热点，高效工作一整天
 
-今日热点简报 | 2026-07-03
+## 今日热点简报 | 2026-07-03
 
-今日概览
+## 今日概览
 [用2-4句概括今天最重要的变化。先说结论，再说变化方向，不要写空泛开场。]
 
-重点新闻
+## 重点新闻
 1. [标题]
 发生了什么：[1-2句]
 为什么重要：[1句]
@@ -207,30 +215,30 @@ Default variant: `信息密度高版`
 证据状态：[已确认]
 来源：[媒体A]、[媒体B]、[官方来源]
 
-分主题速览
+## 分主题速览
 
-AI与科技
-- [标题]：[一句话]
-- [标题]：[一句话]
-
-政治与政策
+### AI与科技
 - [标题]：[一句话]
 - [标题]：[一句话]
 
-商业与市场
+### 政治与政策
 - [标题]：[一句话]
 - [标题]：[一句话]
 
-文化与社会
+### 商业与市场
+- [标题]：[一句话]
 - [标题]：[一句话]
 
-体育
+### 文化与社会
 - [标题]：[一句话]
 
-专项关注
+### 体育
 - [标题]：[一句话]
 
-继续跟踪
+### 专项关注
+- [标题]：[一句话]
+
+## 继续跟踪
 - [仍在发酵、适合下个周期继续观察的主题]
 - [仍需更多信息确认的主题]
 ```
@@ -247,15 +255,15 @@ AI与科技
 
 Use as the default long-message format when the user does not specify a style.
 
-```text
+```md
 一次刷尽近期热点，高效工作一整天
 
-今日热点简报 | 2026-07-03
+## 今日热点简报 | 2026-07-03
 
-今日概览
+## 今日概览
 [2-4句。直接说今天最重要的变化与方向。]
 
-重点新闻
+## 重点新闻
 1. [标题]
 发生了什么：[1-2句]
 为什么重要：[1句]
@@ -277,30 +285,30 @@ Use as the default long-message format when the user does not specify a style.
 证据状态：[已确认]
 来源：[媒体A]、[媒体B]、[官方来源]
 
-分主题速览
+## 分主题速览
 
-AI与科技
-- [标题]：[一句话]
-- [标题]：[一句话]
-
-政治与政策
+### AI与科技
 - [标题]：[一句话]
 - [标题]：[一句话]
 
-商业与市场
+### 政治与政策
 - [标题]：[一句话]
 - [标题]：[一句话]
 
-文化与社会
+### 商业与市场
+- [标题]：[一句话]
 - [标题]：[一句话]
 
-体育
+### 文化与社会
 - [标题]：[一句话]
 
-专项关注
+### 体育
 - [标题]：[一句话]
 
-继续跟踪
+### 专项关注
+- [标题]：[一句话]
+
+## 继续跟踪
 - [仍在发酵、适合下个周期继续观察的主题]
 - [仍需更多信息确认的主题]
 ```
@@ -318,15 +326,15 @@ AI与科技
 
 Use when the reader wants a faster executive scan with fewer items and stronger prioritization.
 
-```text
+```md
 一次刷尽近期热点，高效工作一整天
 
-今日热点速览 | 2026-07-03
+## 今日热点速览 | 2026-07-03
 
-一句话判断
+## 一句话判断
 [用1-2句先说今天最值得关注的变化]
 
-最重要的三件事
+## 最重要的三件事
 1. [标题]
 发生了什么：[1句]
 影响判断：[1句]
@@ -348,13 +356,13 @@ Use when the reader wants a faster executive scan with fewer items and stronger 
 证据状态：[已确认]
 来源：[媒体A]、[媒体B]
 
-其他值得看
+## 其他值得看
 - AI与科技：[一句话]
 - 政策与政治：[一句话]
 - 市场与商业：[一句话]
 - 文化/体育：[一句话]
 
-继续跟踪
+## 继续跟踪
 - [主题]
 ```
 
@@ -376,3 +384,4 @@ Use when the reader wants a faster executive scan with fewer items and stronger 
 6. Put `来源级别` and `证据状态` before `来源`
 7. Remove empty sections instead of leaving placeholders
 8. Default to source-included output for evidence traceability
+9. Keep the final rendering in Markdown even when the structure is compact

@@ -3,7 +3,7 @@
 一次刷尽近期热点，高效工作一整天  
 Scan the day in one pass, from headlines to chatter
 
-[![Version](https://img.shields.io/badge/version-v0.1.2-2f6feb)](#release-notes)
+[![Version](https://img.shields.io/badge/version-v0.1.3-2f6feb)](#release-notes)
 [![License](https://img.shields.io/badge/license-MIT-1f883d)](./LICENSE)
 [![Type](https://img.shields.io/badge/type-AI%20Agent%20Skill-8250df)](#项目表头)
 [![Language](https://img.shields.io/badge/language-ZH%20%7C%20EN-f59e0b)](#中文说明)
@@ -17,7 +17,7 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 | 字段 | 内容 |
 |---|---|
 | 名称 | `more-news-briefing` |
-| 版本 | `v0.1.2` |
+| 版本 | `v0.1.3` |
 | 类型 | AI Agent Skill / 新闻简报技能 |
 | 场景 | 新闻简报 / 日报周报 / 研究跟踪 / 长消息汇总 |
 | 关键词 | `news briefing`, `digest`, `AI`, `policy`, `business`, `WeChat`, `Feishu`, `新闻简报`, `日报`, `周报`, `研究跟踪` |
@@ -50,7 +50,7 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 > "使用 $more-news-briefing，按默认主题做一个今日新闻简报。"
 
-首次激活后，技能会自动引导你定义专项主题的范围、关键词和关注维度。后续直接提及 `$more-news-briefing` 即可按上次设定执行。
+首次激活后，技能会先给一个很短的入口：`直接开始 / 快速自定义 / 深度自定义`。如果你愿意先快速定一下主题、专项方向、地域和关注重点，后续结果会稳定很多；如果你只想马上看结果，也可以先按默认口径跑一版。
 
 
 ### 功能概览
@@ -64,11 +64,11 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 ### 基于实现的功能亮点
 
-- 首次使用不容易跑偏：内置 `onboarding-template`，会先让用户用多选方式确定“综合热点 / 固定主题 / 专项持续跟踪”，再细化子方向、关注重点、地域范围和信息源风格，避免一上来就搜得太散
+- 首次使用更不容易被跳过自定义：入口先收口成 `直接开始 / 快速自定义 / 深度自定义` 三段式。想低摩擦开始可以直接跑，愿意个性化时再继续补主题、专项方向、地域和关注重点，减少第一次使用时“默认直接跑掉”的情况
 - 默认主题开箱即用：如果用户只说“做个今日简报”，实现会自动落到 `AI与科技 / 政治与政策 / 商业与市场 / 文化与社会 / 体育` 这组预定义主题；一旦补充专项主题，会自动把“专项关注”并入同一份简报
 - 专项监测更像行业 watch，而不是临时搜词：除了收集关键词，还支持 geography、priority 以及公司/机构/社区 watchlist，适合储能、充电桩、V2G、快充、无线充电、超级电容这类长期跟踪主题
 - 简讯模板不是单一版式：仓库里已经预置 `Short Brief`、`Standard Digest`、`Analyst Watch`、`Source-attributed`、`WeChat / Feishu long message`、`信息密度高版`、`领导速览版` 等模板，能按阅读场景直接出稿
-- 天然适合飞书/微信推送：长消息模板已经按聊天界面做了标题、段落密度、分主题速览和“继续跟踪”收口，既能做高信息密度版，也能做领导速览版，减少二次手工改写
+- 天然适合飞书/微信推送：现在默认要求最终成稿使用 Markdown 输出，并限制为适合聊天工具粘贴的轻量格式。长消息模板已经按聊天界面做了标题、段落密度、分主题速览和“继续跟踪”收口，既能做高信息密度版，也能做领导速览版，减少二次手工改写
 - 可自定义后续推送与自动化：当任务包含持续投递时，skill 约定可以把最终稳定结构交给 `automation-workflows`，继续衔接定时发送、频道分发或重复执行，不需要每次重配整套流程
 - 弱证据不会硬塞进正文：验证后可以把条目保留、降级或移到“继续跟踪”，这样正式简报和观察项天然分层，更适合研究汇报和团队同步
 
@@ -106,7 +106,13 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 ### 首次使用交互
 
-第一次使用时，skill 会先帮助用户把主题定清楚，再开始检索。尤其当用户提到“专项主题”但定义仍然偏宽泛时，会优先补全这些信息：
+第一次使用时，skill 不再一上来就丢一个完整问卷，而是先给一个很短的三选一入口：
+
+1. `直接开始`：先按默认主题跑一版
+2. `快速自定义`：优先确认主题、专项方向、地域、关注重点
+3. `深度自定义`：进一步补信息源风格和观察名单
+
+如果用户进入自定义分支，尤其当用户提到“专项主题”但定义仍然偏宽泛时，会优先补全这些信息：
 
 1. 专项主题名称
 2. 关注范围，例如技术、政策、企业、项目或市场切片
@@ -141,6 +147,12 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 - `Analyst Watch`：适合研究型监测的分析视图
 - `Long Message Briefing`：适合微信或飞书长消息投递
 
+当前默认交付格式：
+
+- 最终答案默认使用 `Markdown`
+- 优先使用标题、编号列表、平铺项目符号
+- 不依赖 HTML、复杂表格或容易在飞书里粘贴失真的格式
+
 ### 典型用法
 
 - “做个今日新闻简报”
@@ -149,6 +161,14 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 - “把我给你的素材整理成带来源的简报”
 
 ## 版本说明
+
+### v0.1.3
+
+- 默认把最终成稿格式收口为 `Markdown`，更适合飞书、微信等聊天场景直接粘贴发送
+- 同步调整输出模板示例，让 `Short Brief`、`Standard Digest`、`Analyst Watch` 和长消息模板都以 Markdown 结构展示
+- 优化首次使用入口，不再默认让用户在第一次调用时悄悄跳过自定义
+- 新增 `直接开始 / 快速自定义 / 深度自定义` 三段式首轮分流，既保留低摩擦首跑，也让个性化配置更显式
+- 明确首次按默认口径执行时，需要在输出中显式声明默认假设，并提醒用户下次可走快速自定义
 
 ### v0.1.2
 
@@ -163,11 +183,6 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 - 新增中英双语 `README.md`
 - 新增 GitHub 风格徽章、关键词索引、快速导航与跳转链接
 - 新增标准 MIT `LICENSE`
-
-## 备注
-
-- 当前发布版本为 `v0.1.2`
-- 该技能定位为独立可运行的完整新闻简报 skill
 
 ---
 
@@ -201,7 +216,7 @@ Place this repository into your AI Agent skills directory (e.g., `~/.codex/skill
 
 > "Use $more-news-briefing. Make a news digest with default topics in full mode."
 
-On first use, the skill will guide you through defining specialty topic scope, keywords, and watch dimensions. After setup, simply mention `$more-news-briefing` to run with your saved configuration.
+On first use, the skill now starts with a very short gate: `direct default run / quick customization / deep customization`. If you want lower friction, you can run once with defaults; if you want better fit, you can quickly lock in topic mix, specialty direction, geography, and watch priorities first.
 
 
 ### What It Does
@@ -215,11 +230,11 @@ On first use, the skill will guide you through defining specialty topic scope, k
 
 ### Implementation-Backed Highlights
 
-- First-use setup is guided instead of ad hoc: the built-in onboarding flow asks the user to choose broad news, fixed themes, or specialty monitoring first, then narrows subtopic, priorities, geography, and source style before retrieval starts
+- First-use setup is less likely to skip customization by accident: the onboarding flow now starts with a compact three-path gate for direct default run, quick customization, or deep customization before expanding into the full topic form
 - Default topics work out of the box: if the user simply asks for a digest, the implementation falls back to a predefined mix of `AI and technology`, `politics and policy`, `business and markets`, `culture and society`, and `sports`; a specialty topic is then appended into the same briefing when needed
 - Specialty monitoring behaves more like an industry watchlist than a one-off search: the contract supports specialty keywords, geography, priority lenses, and company / institution / community watchlists for repeatable tracking
 - Output is template-rich, not one-size-fits-all: the repository already includes `Short Brief`, `Standard Digest`, `Analyst Watch`, source-attributed formats, WeChat / Feishu long-message layouts, a high-density variant, and an executive-skim variant
-- Chat delivery is a first-class scenario: the long-message renderers are already shaped for WeChat and Feishu style reading, with short title lines, dense top items, topic-bucket recap, and a clean follow-up section
+- Chat delivery is a first-class scenario: final output now defaults to Markdown, using lightweight structure that pastes cleanly into WeChat and Feishu while keeping the long-message layouts readable
 - Ongoing push workflows can be customized: when the job includes repeated delivery, the skill is designed to hand off its stable digest structure to `automation-workflows` for scheduling and downstream channel delivery
 - Weak evidence is handled visibly: verification can keep, downgrade, or move items into a follow-up watch section so the main digest stays cleaner for actual reporting
 
@@ -257,7 +272,13 @@ If the user does not specify topics, the skill defaults to:
 
 ### First-Use Interaction
 
-On the first use, the skill should resolve the user's topic design before retrieval begins. When a specialty topic is still vague, it should help the user refine:
+On the first use, the skill should not drop the user straight into a heavy form. It should start with a compact three-path choice:
+
+1. direct default run
+2. quick customization
+3. deep customization
+
+If the user chooses customization, and a specialty topic is still vague, it should help the user refine:
 
 1. topic name
 2. scope
@@ -292,7 +313,21 @@ That makes this repository more useful than a one-off summarization prompt. It g
 - `Analyst Watch`: research-heavy monitoring format
 - `Long Message Briefing`: chat-friendly format for WeChat or Feishu
 
+Default delivery format:
+
+- final answers are rendered in `Markdown`
+- headings, numbered lists, and flat bullets are preferred
+- complex HTML-style formatting should be avoided for chat delivery
+
 ## Release Notes
+
+### v0.1.3
+
+- Defaulted final delivery to `Markdown` for cleaner WeChat and Feishu paste behavior
+- Updated the reusable output templates so the briefing examples themselves follow Markdown structure
+- Tightened first-use onboarding so customization is not silently skipped on direct first invocation
+- Added a three-path first-use gate: direct default run, quick customization, and deep customization
+- Required first-use default runs to label assumptions explicitly and remind the user that quick customization is available
 
 ### v0.1.2
 
@@ -307,8 +342,3 @@ That makes this repository more useful than a one-off summarization prompt. It g
 - Added a bilingual `README.md`
 - Added GitHub-style badges, keyword indexing, quick navigation, and anchor links
 - Added a standard MIT `LICENSE`
-
-## Notes
-
-- The current repository release is `v0.1.2`
-- This skill is designed as a complete standalone news-briefing workflow

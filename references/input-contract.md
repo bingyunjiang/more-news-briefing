@@ -31,11 +31,27 @@ Read [topic-enums.md](./topic-enums.md) when you need to classify the user's cho
 Read [source-family-catalog.md](./source-family-catalog.md) when you need to translate the user's preferences into source-role choices or recurring watchlists.
 Read [watchlist-template.md](./watchlist-template.md) when the user wants a recurring specialty briefing and needs a recommended starting watchlist for companies, institutions, and communities.
 
+Use a two-step first-use policy:
+
+1. First show a compact gate: `直接开始` / `快速自定义` / `深度自定义`
+2. Then ask only the minimum number of follow-up questions needed for the chosen path
+
+Do not silently treat an empty first-use request as consent to skip customization forever. At most, treat it as permission to run this one briefing with defaults and remind the user that a lightweight customization path exists.
+
 Use a compact intake with two layers:
 
 1. Choose the briefing shape: broad default mix, focused multi-topic mix, or specialty-only monitoring
 2. If a specialty topic is included, define it well enough to search repeatedly
 3. If the user cares about repeatability, resolve source preferences and watchlists at the same time
+
+For `快速自定义`, stop after these fields unless the user volunteers more:
+
+1. `topic_mix`
+2. `specialty_label` or `specialty_scope` if relevant
+3. `specialty_geography`
+4. `specialty_priority`
+
+For `深度自定义`, continue into `source_roles`, exclusions, and watchlists.
 
 For a specialty topic, try to resolve these fields:
 
@@ -85,6 +101,8 @@ If the user does not care, use the smallest reasonable defaults:
 
 If the user gives only a loose label such as `储能`, `充电`, or `机器人`, do not treat that as a complete specialty definition. Offer a more concrete candidate formulation and get confirmation before retrieval.
 
+If the user chose `直接开始`, you may skip this follow-up for the current run only, but the output should record that the specialty dimension was not customized.
+
 ## Rolling-window rule
 
 For recurring or quasi-recurring news work, prefer a rolling window over a strict same-day cutoff.
@@ -118,6 +136,8 @@ If the user says `日报` or clearly wants a repeatable daily run, change only t
 1. `time_window`: `last_7d`
 2. `cadence`: `daily`
 3. Keep the remaining defaults unchanged
+
+If this is also their first use, still show the compact first-use gate before locking these defaults in.
 
 ## Specialty-topic rule
 
@@ -207,3 +227,5 @@ community_watchlist: known names only
 ## Output note
 
 Put the resolved assumptions near the top or bottom of the final digest whenever they were inferred instead of explicitly provided.
+
+For first-use default runs, explicitly label the assumptions as `本次按默认口径执行` so the user can tell the run was not yet customized.

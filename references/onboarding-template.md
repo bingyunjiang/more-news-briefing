@@ -3,6 +3,7 @@
 Use this reference when the user is using `more-news-briefing` for the first time, or when they introduce a new specialty topic that is still too vague for stable retrieval.
 
 Prefer multiple-choice interaction over free-form writing. Ask the user to choose first, and only request typed details when the specialty topic is still too broad after selection.
+The first message should minimize drop-off. Do not start with the full questionnaire unless the user already asked for recurring monitoring or deep customization.
 
 Read [topic-enums.md](./topic-enums.md) before presenting topic menus. Treat its `default topic enums` and `specialty topic enums` as the canonical menu source.
 Read [source-family-catalog.md](./source-family-catalog.md) when the user wants a repeatable specialty briefing and you need to resolve source-role preference or recurring watchlists.
@@ -15,7 +16,16 @@ When writing the onboarding message, do not hand-maintain the topic menu inside 
 Use this default Chinese prompt skeleton for first-use onboarding. Replace the placeholders with the current rendered menu blocks from [topic-enums.md](./topic-enums.md):
 
 ```text
-先把这版简报的主题定一下，我再开始检索。你尽量按选项回复就行：
+你这次是第一次用这个简报 skill 的话，建议先花 10 秒定一下口味，后面结果会稳定很多。你直接回一个选项就行：
+
+0. 这次怎么开始？
+A. 直接开始：先按默认主题跑一版
+B. 快速自定义：补主题、专项方向、地域、关注重点
+C. 深度自定义：再加信息源风格和观察名单
+
+如果你只回 `A`，我就先出一版默认简报，并把默认假设写清楚；如果你回 `B` 或 `C`，我再继续下面这组选择。
+
+先把这版简报的主题定一下，你尽量按选项回复就行：
 
 1. 这次要哪种简报？
 A. 综合热点
@@ -61,8 +71,40 @@ D. 这次先不定
 9. 如果后面需要登录某些高价值信息源，我会提醒你登录，再继续抓取。
 
 你可以直接回复类似：
-“1B，2A+F+J，3储能+大模型技术，4B+D+F，5A+C，6B+D，7A+B，不看纯乘用车销量。”
+“0B，1B，2A+F+J，3储能+大模型技术，4B+D+F，5A+C，不看纯乘用车销量。”
+
+或者更短一点：
+“0A，先按默认跑。”
 ```
+
+## First-use gate only
+
+If the user directly invokes the skill with almost no setup context, start with this shorter gate before the full onboarding prompt:
+
+```text
+这类简报第一次用时，先定一下口味会更准。你直接回一个就行：
+
+A. 先按默认主题直接跑一版
+B. 我做个快速自定义
+C. 我做个深度自定义
+
+说明：
+- `A`：我会按默认主题先出一版，并把默认假设写出来
+- `B`：我只问你 4 个最关键的问题：主题、专项方向、地域、关注重点
+- `C`：我再多帮你定信息源风格和观察名单
+```
+
+If the user chooses `A`, do not ask the full onboarding form in the same turn. Run the digest, then add one short note in the output telling them how to trigger `快速自定义` next time.
+
+If the user chooses `B`, ask only these fields first:
+
+1. briefing shape
+2. topic mix
+3. specialty subtopic if any
+4. geography
+5. priority lens
+
+If the user chooses `C`, continue with the full onboarding prompt.
 
 Map source-style selections with [source-family-catalog.md](./source-family-catalog.md):
 
@@ -136,6 +178,14 @@ watchlist_source:
 ```
 
 Do not show this normalized block unless it helps the user confirm assumptions quickly.
+
+## Output-side reminder for first-use defaults
+
+If the user chose `A. 直接开始` or ignored customization and you proceeded with defaults, add a short reminder near the end of the digest like:
+
+```text
+本次先按默认口径执行：如果你下次回复“快速自定义”，我会先帮你把主题、专项方向、地域和关注重点固定下来，后续结果会更贴近你的长期关注。
+```
 
 ## Maintenance note
 

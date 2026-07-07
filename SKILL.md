@@ -11,6 +11,14 @@ Build a recurring news digest with an internal workflow for collection, filterin
 
 Before the first real retrieval pass, resolve whether this is the user's first use of the skill or the first time they are asking for a new specialty watchlist. If the topic mix is missing, vague, or only says things like `看下专项`, pause and complete the topic contract first.
 
+When the user directly invokes the skill with a short request such as `做个简报`, `跑一下`, or `按默认来`, do not silently skip customization on the first turn. Give them a compact first-use gate that makes the choices visible:
+
+1. `直接开始`: run once with the default broad mix
+2. `快速自定义`: choose topic mix, specialty direction, geography, and priority lens
+3. `深度自定义`: also define source style and recurring watchlists
+
+If the user does not engage with the gate and still wants immediate output, proceed with the default broad mix for that run, but explicitly tell them that the skill supports a quick customization pass and show what was assumed.
+
 ## Default Operating Mode
 
 If the user does not specify a cadence, ask only if scheduling is the main task. Otherwise assume a one-off run that is compatible with future automation.
@@ -18,6 +26,8 @@ If the user does not specify a cadence, ask only if scheduling is the main task.
 Before collecting, normalize the request with the input contract in [input-contract.md](./references/input-contract.md). If the user gives a loose request like "做个今日简报", fill the missing fields with defaults and state those assumptions in the final output.
 
 If this looks like the user's first use, or the request introduces a new specialty topic, do a short topic-intake interaction before retrieval. Keep the intake compact, but do not skip specialty-topic clarification when the topic definition is still too loose to search or rank well.
+
+For first use, do not open with a long free-form questionnaire. Start with one compact gate that lets the user choose between default, quick customization, and deep customization. The goal is to surface customization early without increasing friction so much that the user abandons the skill.
 
 If the user does not specify topics, use this default mix:
 
@@ -45,9 +55,19 @@ Read [topic-enums.md](./references/topic-enums.md) when you need the canonical s
 
 Cover these decisions in order:
 
-1. Choose the briefing shape: broad default mix, focused multi-topic mix, or specialty-only monitoring
-2. Confirm the primary themes the user wants tracked every run
-3. If a specialty topic exists, refine it until the search space is operational
+1. Offer the first-use gate: default run, quick customization, or deep customization
+2. Choose the briefing shape: broad default mix, focused multi-topic mix, or specialty-only monitoring
+3. Confirm the primary themes the user wants tracked every run
+4. If a specialty topic exists, refine it until the search space is operational
+
+Treat `quick customization` as the preferred default branch for first-use users who seem willing to personalize but do not want a heavy setup. In that branch, prioritize four fields only:
+
+1. Topic mix
+2. Specialty subtopic if any
+3. Geography
+4. Priority lens
+
+Only expand into source style, exclusions, and watchlists when the user explicitly chooses `deep customization`, asks for recurring monitoring, or shows strong domain specificity.
 
 For specialty topics, explicitly collect enough detail to support stable retrieval and ranking:
 
@@ -292,12 +312,15 @@ Treat formatting as part of the deliverable, not decoration. Keep the structure 
 ### Global formatting rules
 
 1. Start with `一次刷尽近期热点，高效工作一整天` unless the user explicitly asks for a different opening
-2. Put the highest-value summary first
-3. Keep section titles short and consistent
-4. Keep each news item in the same field order
-5. Avoid long paragraphs; prefer compact blocks
-6. Include source lines by default to preserve an evidence trail
-7. Prefer mobile-friendly line lengths for chat delivery
+2. Render the final deliverable in Markdown by default so it stays readable in Feishu, WeChat, and similar chat surfaces
+3. Put the highest-value summary first
+4. Keep section titles short and consistent
+5. Keep each news item in the same field order
+6. Avoid long paragraphs; prefer compact blocks
+7. Include source lines by default to preserve an evidence trail
+8. Prefer mobile-friendly line lengths for chat delivery
+
+Use plain, portable Markdown only. Prefer headings, numbered lists, and flat bullets. Do not rely on HTML, complex tables, or formatting that breaks when pasted into chat tools.
 
 ### Required field order for each item
 
