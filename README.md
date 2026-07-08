@@ -22,6 +22,8 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 | 场景 | 新闻简报 / 日报周报 / 研究跟踪 / 长消息汇总 |
 | 关键词 | `news briefing`, `digest`, `AI`, `policy`, `business`, `WeChat`, `Feishu`, `新闻简报`, `日报`, `周报`, `研究跟踪` |
 
+![Poster](/poster/Image.png)
+
 ## 中文说明
 
 `more-news-briefing` 是一个独立可运行的新闻/行业信息简报 skill，用于把分散的时事信息整理成结构稳定、可追溯来源、适合直接交付的多主题资讯摘要。它覆盖从需求归一化、候选信息收集、去重、排序，到最终格式化输出的完整链路，适合一次性简报，也适合持续性日报、周报和专题监测。
@@ -159,6 +161,9 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 - “按 AI、政策、商业三个主题做周报”
 - “帮我整理成适合微信发送的长消息版资讯汇总”
 - “把我给你的素材整理成带来源的简报”
+
+![Poster](poster/20260707-173132.png)
+
 
 ## 版本说明
 
