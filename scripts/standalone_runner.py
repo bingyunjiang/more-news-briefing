@@ -35,10 +35,11 @@ DEFAULT_SOURCE_ROLES = ["discovery", "verification"]
 SPECIALTY_SOURCE_ROLES = ["discovery", "verification", "context", "watch"]
 DEFAULT_TOPICS = ["AI与科技", "政治与政策", "商业与市场", "文化与社会", "体育"]
 DEFAULT_COUNT_TARGETS = {"quick": 5, "standard": 8, "analyst": 8}
-VERIFICATION_RESULT_REQUIRED_FIELDS = ["title", "verdict"]
+VERIFICATION_RESULT_REQUIRED_FIELDS = ["verdict"]
 VERIFICATION_RESULT_OPTIONAL_FIELDS = [
     "item_id",
     "canonical_url",
+    "title",
     "claim",
     "why",
     "source_level",
@@ -798,6 +799,11 @@ def build_verification_result_contract() -> dict[str, Any]:
     return {
         "version": 1,
         "required_fields": VERIFICATION_RESULT_REQUIRED_FIELDS,
+        "identity_fields": {
+            "at_least_one": ["item_id", "canonical_url", "title"],
+            "preference_order": ["item_id", "canonical_url", "title"],
+            "title_fallback": "unique_titles_only",
+        },
         "optional_fields": VERIFICATION_RESULT_OPTIONAL_FIELDS,
         "verdicts": {
             "keep": "保留在主简报，并可用更强证据字段覆盖原字段。",
