@@ -11,6 +11,8 @@ This catalog is derived from four neighboring projects:
 
 The goal is not to mirror their exact source lists. The goal is to reuse their source-family logic inside `more-news-briefing`.
 
+This file stays at the family and routing level. Read [borrowed-source-catalog.md](./borrowed-source-catalog.md) when you need concrete sites, feeds, APIs, domestic media subchannels, access conditions, and documented fallback routes from `AIMedia` and `Horizon`.
+
 ## How to use this catalog
 
 For each briefing bucket, try to assign:

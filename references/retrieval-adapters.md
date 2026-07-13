@@ -56,6 +56,8 @@ Do not borrow from `anysearch`:
 
 Use a hotlist-like collector when you need fast discovery rather than final proof.
 
+Read [borrowed-source-catalog.md](./borrowed-source-catalog.md) before choosing a concrete collector. Start with public and keyless routes such as media channel pages, Google News RSS, GDELT, Hacker News, RSS/Atom, GitHub, or OSS Insight. Use provider-, token-, subscription-, or login-dependent routes only when they materially improve a priority bucket.
+
 Good examples:
 
 1. Hacker News for builder attention
@@ -74,6 +76,8 @@ Do not borrow from them:
 1. final factual authority
 2. policy or safety proof
 3. capital-markets confirmation
+
+Keep a source-specific fallback route. Examples include channel feed to public page, RSS to linked HTML, Reddit old-web to JSON/RSS, GitHub API to release page, and OpenBB to filing or company investor relations.
 
 If a stronger structured source needs login, it is acceptable to use it after asking the user to sign in.
 

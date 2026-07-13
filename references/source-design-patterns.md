@@ -9,6 +9,8 @@ Use this reference when you need to design a stronger source pool before retriev
 
 Do not copy their workflows whole. Borrow only the source and retrieval patterns that strengthen `more-news-briefing`.
 
+For the concrete sites, feeds, APIs, channel examples, access requirements, and fallback routes extracted from `AIMedia` and `Horizon`, read [borrowed-source-catalog.md](./borrowed-source-catalog.md).
+
 ## Core lesson
 
 Do not think of “news source” as one thing. Split the pool into source roles:

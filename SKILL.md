@@ -215,6 +215,8 @@ Read [source-design-patterns.md](./references/source-design-patterns.md) when th
 
 Read [source-family-catalog.md](./references/source-family-catalog.md) when you need a more concrete source menu, including China hotlists, mainstream direct-reporting families, developer communities, official institutions, and specialty industrial source families.
 
+Read [borrowed-source-catalog.md](./references/borrowed-source-catalog.md) when you need exact sites, feeds, APIs, channel examples, access requirements, source roles, and fallback routes distilled from `AIMedia` and `Horizon`. Prefer its public and keyless routes for default runs; treat undocumented endpoints and third-party feed mirrors as fragile discovery routes.
+
 Read [watchlist-template.md](./references/watchlist-template.md) when the user wants recurring specialty monitoring and would benefit from a suggested starter watchlist instead of naming every company, institution, or community from scratch.
 
 ### 3. Deduplicate and rank
@@ -439,6 +441,8 @@ Read [retrieval-adapters.md](./references/retrieval-adapters.md) when you want t
 Read [source-design-patterns.md](./references/source-design-patterns.md) when you want reusable source-pool patterns borrowed from neighboring projects such as hotlist directories, community-signal enrichment, fallback routes, and recurring watchlists.
 
 Read [source-family-catalog.md](./references/source-family-catalog.md) when you want a ready-to-use family catalog for pairing discovery sources, verification sources, context sources, and recurring specialty watch sources.
+
+Read [borrowed-source-catalog.md](./references/borrowed-source-catalog.md) when you want the concrete source and website inventory borrowed from `AIMedia` and `Horizon`, including domestic media subchannels, Google News RSS, GDELT, Hacker News, GitHub, RSS, Reddit, Telegram, OSS Insight, OpenBB, X, and curated specialty feeds.
 
 Read [anysearch-adapter-runbook.md](./references/anysearch-adapter-runbook.md) when you want a concrete `anysearch`-based first-pass retrieval workflow for broad multi-bucket briefings.
 
