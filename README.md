@@ -169,11 +169,10 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 ### v0.1.4
 
-- 新增 `references/borrowed-source-catalog.md`，将 AIMedia 与 Horizon 的新闻来源整理为可直接选用的网站、Feed、API、社区和观察名单目录
+- 新增 `references/borrowed-source-catalog.md`，将新闻来源整理为可直接选用的网站、Feed、API、社区和观察名单目录
 - 补充网易、澎湃、中国日报、搜狐、腾讯新闻、腾讯体育、新浪国际、IT之家等国内媒体及细频道的适用主题、来源角色和验证要求
 - 纳入 Google News RSS、GDELT、Hacker News、GitHub、RSS、Reddit、Telegram、OSS Insight、OpenBB 与 X 等开放或可选来源，并标注访问条件
 - 新增中国综合、AI 科技、国际事务、商业市场、文化社会和体育的默认选源组合，以及逐来源 fallback 和统一来源元数据字段
-- 将具体来源目录接入主收集流程与 retrieval adapter，同时保持 skill 独立运行，不复制 AIMedia/Horizon 爬虫代码或引入下载目录依赖
 
 ### v0.1.3
 
@@ -336,11 +335,10 @@ Default delivery format:
 
 ### v0.1.4
 
-- Added `references/borrowed-source-catalog.md`, turning the AIMedia and Horizon source inventories into a concrete catalog of sites, feeds, APIs, communities, and watchlists
+- Added `references/borrowed-source-catalog.md`, turning the inventories into a concrete catalog of sites, feeds, APIs, communities, and watchlists
 - Documented Chinese media and channel coverage for NetEase, The Paper, China Daily, Sohu, Tencent News, Tencent Sports, Sina International, and IT Home, including source roles and verification requirements
 - Added Google News RSS, GDELT, Hacker News, GitHub, RSS, Reddit, Telegram, OSS Insight, OpenBB, and X with access requirements and evidence boundaries
 - Added default source packs for China, AI and technology, global affairs, business and markets, culture and society, and sports, plus per-source fallbacks and normalized source metadata
-- Connected the catalog to the main collection workflow and retrieval adapters without copying upstream crawler code or adding runtime dependencies on AIMedia or Horizon
 
 ### v0.1.3
 
