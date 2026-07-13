@@ -34,14 +34,14 @@ Every vendored skill snapshot should be listed in `vendor-manifest.json`.
 
 For each entry, record:
 
-1. `name`
-2. `source_path`
-3. `snapshot_path`
-4. `bundled`
-5. `role`
-6. `required_by_default`
-7. `license_note`
-8. `update_policy`
+1. `name` and portable `source_ref`
+2. `snapshot_path` and one or more `entrypoints`
+3. `bundled`, `role`, and `required_by_default`
+4. `credential_env` and `credential_required` when relevant
+5. `license_status` and `license_note`
+6. `update_policy`
+
+The runner routes through a snapshot only when its entrypoints are present, required credentials are available, and `license_status` is `verified`. An unresolved snapshot remains inspectable but is not executable.
 
 Do not keep secrets, local `.env` files, caches, or machine-specific state inside vendored snapshots.
 

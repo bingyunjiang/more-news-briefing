@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import subprocess
 import sys
@@ -5,6 +7,9 @@ import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
+from unittest import mock
+
+from scripts import standalone_runner as runner
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -29,7 +34,166 @@ def run_runner(*args: str) -> tuple[dict, str]:
         return {}, stdout
 
 
+def run_runner_in_process(*args: str) -> tuple[dict, str]:
+    output = io.StringIO()
+    with mock.patch.object(sys, "argv", [str(RUNNER), *args]), contextlib.redirect_stdout(output):
+        return_code = runner.main()
+    if return_code != 0:
+        raise AssertionError(f"runner returned {return_code}")
+    stdout = output.getvalue().strip()
+    try:
+        return json.loads(stdout), stdout
+    except json.JSONDecodeError:
+        return {}, stdout
+
+
 class StandaloneRunnerTests(unittest.TestCase):
+    def test_all_cli_commands_run_in_process(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            items_file = tmpdir_path / "items.json"
+            results_file = tmpdir_path / "results.json"
+            prepared_file = tmpdir_path / "prepared.json"
+            verification_output = tmpdir_path / "shared.verification-results.json"
+            final_output = tmpdir_path / "final.md"
+            draft_file = tmpdir_path / "draft.md"
+            items_file.write_text(ITEMS_FILE.read_text(encoding="utf-8"), encoding="utf-8")
+            results_file.write_text(
+                VERIFICATION_RESULTS_FILE.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+            draft_file.write_text("一次刷尽近期热点，高效工作一整天\n", encoding="utf-8")
+
+            common = (
+                "--time-window",
+                "last_7d",
+                "--cadence",
+                "weekly",
+                "--topic-mix",
+                "AI与科技,专项关注",
+                "--depth",
+                "analyst",
+                "--format",
+                "long_message",
+                "--audience",
+                "research",
+                "--mode",
+                "full",
+                "--specialty",
+                "BESS",
+                "--specialty-scope",
+                "grid-scale storage",
+                "--specialty-keywords",
+                "BESS,储能",
+                "--specialty-exclusions",
+                "户储",
+                "--specialty-geography",
+                "China",
+                "--specialty-priority",
+                "policy",
+                "--source-roles",
+                "discovery,verification,watch",
+                "--company-watchlist",
+                "CATL",
+                "--institution-watchlist",
+                "国家能源局",
+                "--community-watchlist",
+                "OpenEMS",
+            )
+
+            json_commands = [
+                ("contract", *common),
+                ("queries", *common, "--flat"),
+                ("adapters", "--available-only"),
+                ("route", *common),
+                ("collect", *common),
+                ("verify", *common, "--items-file", str(items_file)),
+                (
+                    "polish",
+                    *common,
+                    "--items-file",
+                    str(items_file),
+                    "--draft-file",
+                    str(draft_file),
+                ),
+                (
+                    "pipeline",
+                    *common,
+                    "--items-file",
+                    str(items_file),
+                    "--draft-file",
+                    str(draft_file),
+                ),
+                (
+                    "execute",
+                    *common,
+                    "--items-file",
+                    str(items_file),
+                    "--draft-file",
+                    str(draft_file),
+                ),
+                (
+                    "prepare",
+                    *common,
+                    "--items-file",
+                    str(items_file),
+                    "--output-file",
+                    str(prepared_file),
+                ),
+                (
+                    "verify-results",
+                    "--items-file",
+                    str(items_file),
+                    "--results-file",
+                    str(results_file),
+                    "--output-file",
+                    str(verification_output),
+                ),
+                (
+                    "verify-results",
+                    "--items-file",
+                    str(items_file),
+                    "--results-file",
+                    str(results_file),
+                    "--output-file",
+                    str(verification_output),
+                    "--merge",
+                ),
+                (
+                    "finalize",
+                    *common,
+                    "--items-file",
+                    str(items_file),
+                    "--verification-results-file",
+                    str(verification_output),
+                    "--output-file",
+                    str(final_output),
+                ),
+            ]
+
+            for command in json_commands:
+                payload, stdout = run_runner_in_process(*command)
+                self.assertTrue(payload, msg=f"expected JSON output for {command[0]}: {stdout}")
+
+            for output_format in (
+                "quick_brief",
+                "standard_digest",
+                "analyst_watch",
+                "long_message",
+                "long_message_exec",
+            ):
+                _payload, stdout = run_runner_in_process(
+                    "digest",
+                    "--items-file",
+                    str(items_file),
+                    "--format",
+                    output_format,
+                )
+                self.assertIn("一次刷尽近期热点", stdout)
+
+            self.assertTrue(prepared_file.exists())
+            self.assertTrue(verification_output.exists())
+            self.assertTrue(final_output.exists())
+
     def test_prepare_writes_normalized_ranked_items(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             output_file = Path(tmpdir) / "prepared.json"

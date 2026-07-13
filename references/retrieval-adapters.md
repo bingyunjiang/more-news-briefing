@@ -6,6 +6,8 @@ Use this reference when the core weakness is not writing or ranking, but getting
 
 This file describes optional adapters, not mandatory dependencies.
 
+For vendored adapters, directory presence is not enough. Route through one only when the manifest health check confirms its entrypoint, credential condition, and verified distribution license.
+
 Borrow retrieval capability in layers only after confirming the built-in route is insufficient:
 
 1. `native web` for default broad coverage

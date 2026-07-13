@@ -12,32 +12,42 @@
   "skills": [
     {
       "name": "anysearch",
-      "source_path": "/Users/Bing/.codex/skills/anysearch",
+      "source_ref": "anysearch@1.0.3",
       "snapshot_path": "references/skills/anysearch",
+      "entrypoints": ["scripts/anysearch_cli.py"],
+      "credential_env": "ANYSEARCH_API_KEY",
+      "credential_required": false,
       "bundled": true,
       "role": "search expansion adapter",
       "required_by_default": false,
-      "license_note": "Verify upstream license before copying files.",
+      "license_status": "unresolved",
+      "license_note": "Bundled for inspection only until upstream distribution terms are recorded.",
       "update_policy": "manual snapshot when interface changes"
     },
     {
       "name": "deep-research",
-      "source_path": "/Users/Bing/.hermes/skills/deep-research",
+      "source_ref": "deep-research@2.9.4",
       "snapshot_path": "references/skills/deep-research",
+      "entrypoints": ["SKILL.md"],
+      "credential_required": false,
       "bundled": true,
       "role": "deep verification adapter",
       "required_by_default": false,
-      "license_note": "Verify upstream license before copying files.",
+      "license_status": "unresolved",
+      "license_note": "Bundled for inspection only until upstream distribution terms are recorded.",
       "update_policy": "manual snapshot when prompts or runbook change"
     },
     {
       "name": "humanizer-zh",
-      "source_path": "/Users/Bing/.codex/skills/humanizer-zh",
+      "source_ref": "humanizer-zh",
       "snapshot_path": "references/skills/humanizer-zh",
+      "entrypoints": ["SKILL.md"],
+      "credential_required": false,
       "bundled": true,
       "role": "final polish adapter",
       "required_by_default": false,
-      "license_note": "Verify upstream license before copying files.",
+      "license_status": "verified",
+      "license_note": "MIT license is bundled at references/skills/humanizer-zh/LICENSE.",
       "update_policy": "manual snapshot when wording rules change"
     }
   ]

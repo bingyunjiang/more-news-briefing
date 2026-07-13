@@ -4,6 +4,15 @@ Use these templates to keep briefing output consistent across one-off runs and r
 
 All final briefs should be delivered in Markdown by default so they can be pasted directly into Feishu, WeChat, or similar chat tools without reformatting. Prefer headings, numbered lists, and flat bullets over raw plain-text blocks.
 
+## Markdown artifact delivery
+
+Unless the user explicitly requests chat-only output:
+
+1. Save the final briefing as a UTF-8 `.md` file
+2. Use `daily-news-YYYY-MM-DD.md` as the default filename, based on the briefing date
+3. Use an explicit output path or filename when one is provided
+4. Return the saved file path with the briefing so Feishu bots and other delivery systems can consume it directly
+
 Default opening line for final briefs:
 
 `一次刷尽近期热点，高效工作一整天`

@@ -104,6 +104,8 @@ Treat the following as part of the skill's owned core, not borrowed behavior:
 
 If local code support is useful, use the built-in runner documented in [local-runner.md](./references/local-runner.md).
 
+Treat the runner as an artifact-driven execution contract. Its complete phase order is `collect -> normalize/deduplicate -> rank/retain -> verify -> render -> acceptance -> polish`; do not skip the acceptance gate or execute generated command strings through a shell.
+
 When external skills are unavailable, use this standalone route:
 
 1. Build queries from [query-playbook.md](./references/query-playbook.md)
@@ -211,11 +213,7 @@ Read [query-playbook.md](./references/query-playbook.md) before building queries
 
 Read [source-ladder.md](./references/source-ladder.md) before deciding whether a source is strong enough to support a retained item.
 
-Read [source-design-patterns.md](./references/source-design-patterns.md) when the main weakness is source design rather than query wording, especially if you need a better mix of hotlists, official sources, community discussion, and specialty watchlists.
-
-Read [source-family-catalog.md](./references/source-family-catalog.md) when you need a more concrete source menu, including China hotlists, mainstream direct-reporting families, developer communities, official institutions, and specialty industrial source families.
-
-Read [borrowed-source-catalog.md](./references/borrowed-source-catalog.md) when you need exact sites, feeds, APIs, channel examples, access requirements, source roles, and fallback routes distilled from `AIMedia` and `Horizon`. Prefer its public and keyless routes for default runs; treat undocumented endpoints and third-party feed mirrors as fragile discovery routes.
+Choose one source reference for the current problem instead of loading all of them: use [source-design-patterns.md](./references/source-design-patterns.md) for architecture, [source-family-catalog.md](./references/source-family-catalog.md) for source-role routing, or [borrowed-source-catalog.md](./references/borrowed-source-catalog.md) for exact sites, feeds, APIs, access requirements, and fallbacks. Prefer public and keyless routes by default.
 
 Read [watchlist-template.md](./references/watchlist-template.md) when the user wants recurring specialty monitoring and would benefit from a suggested starter watchlist instead of naming every company, institution, or community from scratch.
 
@@ -321,6 +319,10 @@ Treat formatting as part of the deliverable, not decoration. Keep the structure 
 6. Avoid long paragraphs; prefer compact blocks
 7. Include source lines by default to preserve an evidence trail
 8. Prefer mobile-friendly line lengths for chat delivery
+9. Save the finished briefing as a UTF-8 Markdown file unless the user explicitly requests chat-only output
+10. Use `daily-news-YYYY-MM-DD.md` as the default filename, based on the briefing date
+11. Respect an explicit output path or filename when the user or calling workflow provides one
+12. Return the saved file path with the final response so delivery systems such as Feishu bots can consume it directly
 
 Use plain, portable Markdown only. Prefer headings, numbered lists, and flat bullets. Do not rely on HTML, complex tables, or formatting that breaks when pasted into chat tools.
 
@@ -423,31 +425,3 @@ Before finishing, check that the digest:
 6. Can be reused by an external scheduler or automation layer without manual restructuring
 
 Read [acceptance-checklist.md](./references/acceptance-checklist.md) before delivering the final answer when you want a pass/fail check rather than a loose quality scan.
-
-## References
-
-Read [editorial-rubric.md](./references/editorial-rubric.md) when you need the ranking rubric and source-balance rules.
-
-Read [output-templates.md](./references/output-templates.md) when you need reusable Chinese output formats for short briefs, standard digests, analyst-style monitoring notes, or WeChat/Feishu long-message layouts.
-
-Read [input-contract.md](./references/input-contract.md) when the user request is underspecified and you need a repeatable way to set assumptions before retrieval.
-
-Read [embedded-enhancements.md](./references/embedded-enhancements.md) when you want the built-in equivalents of search expansion, deep verification, and humanization patterns that originally came from external skills.
-
-Read [demo-runbook.md](./references/demo-runbook.md) when you want a concrete one-off execution path, including a default sample run and stop conditions.
-
-Read [retrieval-adapters.md](./references/retrieval-adapters.md) when you want to borrow retrieval capability from other skills without making them hard dependencies.
-
-Read [source-design-patterns.md](./references/source-design-patterns.md) when you want reusable source-pool patterns borrowed from neighboring projects such as hotlist directories, community-signal enrichment, fallback routes, and recurring watchlists.
-
-Read [source-family-catalog.md](./references/source-family-catalog.md) when you want a ready-to-use family catalog for pairing discovery sources, verification sources, context sources, and recurring specialty watch sources.
-
-Read [borrowed-source-catalog.md](./references/borrowed-source-catalog.md) when you want the concrete source and website inventory borrowed from `AIMedia` and `Horizon`, including domestic media subchannels, Google News RSS, GDELT, Hacker News, GitHub, RSS, Reddit, Telegram, OSS Insight, OpenBB, X, and curated specialty feeds.
-
-Read [anysearch-adapter-runbook.md](./references/anysearch-adapter-runbook.md) when you want a concrete `anysearch`-based first-pass retrieval workflow for broad multi-bucket briefings.
-
-Read [query-playbook.md](./references/query-playbook.md) when you need default search query templates across AI, politics, business, entertainment, film and TV, academia, energy storage, charging, embodied intelligence, and other high-tech topics.
-
-Read [standalone-operation.md](./references/standalone-operation.md) when you need to complete the workflow without relying on any external skill and may need user-assisted access to account-gated or institution-gated materials.
-
-Read [source-ladder.md](./references/source-ladder.md) when you need a domain-specific trust order for official sources, direct reporting, databases, platforms, commentators, and rumor-sensitive material.

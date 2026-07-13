@@ -33,6 +33,8 @@ Pass only if:
 3. Weakly sourced or unresolved items are labeled and moved to `继续跟踪`
 4. Dates and numbers are consistent across retained claims
 
+The runner treats missing/placeholder title, event text, importance, bucket, sources, or invalid evidence enums as blocking issues. Such items do not enter the main digest.
+
 ## Writing
 
 Pass only if:
@@ -49,3 +51,10 @@ Pass only if:
 1. The digest structure is stable enough to repeat next cycle
 2. Inferred assumptions are visible
 3. Another operator could rerun the same briefing from the stated contract
+4. A writable run produces a UTF-8 `.md` artifact unless the user requested chat-only output
+5. The default artifact follows `daily-news-YYYY-MM-DD.md`, or uses the explicit output path supplied by the caller
+6. The final response exposes the saved artifact path
+
+## Machine report
+
+`finalize` emits `acceptance_report` with `passed`, `blocking_issues`, `warnings`, retained count, and follow-up count. Blocking issues prevent the Markdown artifact from being written; count shortfalls and high-impact evidence gaps remain visible warnings for operator review.

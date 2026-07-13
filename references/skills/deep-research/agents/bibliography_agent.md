@@ -112,7 +112,7 @@ Studies included in review: ___
 
 ## Reading `literature_corpus[]` from Material Passport (v3.6.5+)
 
-**Backpointer**: see [`academic-pipeline/references/literature_corpus_consumers.md`](../../academic-pipeline/references/literature_corpus_consumers.md) for the full consumer protocol, BAD/GOOD examples, and shared template.
+**Backpointer**: the full corpus-consumer protocol belongs to the upstream `academic-pipeline` project and is not bundled in this optional snapshot. Do not assume it is locally available.
 
 When the input Material Passport carries a non-empty `literature_corpus[]`, this agent enters the **corpus-first, search-fills-gap** flow. The flow has five steps and four Iron Rules; the PRE-SCREENED block makes corpus utilisation reproducible.
 

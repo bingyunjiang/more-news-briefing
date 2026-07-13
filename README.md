@@ -173,6 +173,11 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 - 补充网易、澎湃、中国日报、搜狐、腾讯新闻、腾讯体育、新浪国际、IT之家等国内媒体及细频道的适用主题、来源角色和验证要求
 - 纳入 Google News RSS、GDELT、Hacker News、GitHub、RSS、Reddit、Telegram、OSS Insight、OpenBB 与 X 等开放或可选来源，并标注访问条件
 - 新增中国综合、AI 科技、国际事务、商业市场、文化社会和体育的默认选源组合，以及逐来源 fallback 和统一来源元数据字段
+- 加固本地 runner 的完整执行链，明确 `收集 → 归一化/去重 → 排序/保留 → 验证 → 渲染 → 验收 → 润色` 七阶段产物合同
+- 新增稳定 `item_id`、规范 URL 与唯一标题三级验证匹配，未知验证结论和缺失证据条目会失败关闭或进入继续跟踪
+- 新增 `prepare`、机器可读验收报告、确定性去重排序，以及由专项范围、排除项和观察名单生成的查询与来源目标
+- 所有可执行命令改为参数数组，字符串命令仅用于展示；vendored adapter 只有在入口、凭证和许可证均通过检查时才会自动路由
+- 最终简报默认保存为 UTF-8 的 `daily-news-YYYY-MM-DD.md`，并支持调用方指定输出路径
 
 ### v0.1.3
 
@@ -339,6 +344,11 @@ Default delivery format:
 - Documented Chinese media and channel coverage for NetEase, The Paper, China Daily, Sohu, Tencent News, Tencent Sports, Sina International, and IT Home, including source roles and verification requirements
 - Added Google News RSS, GDELT, Hacker News, GitHub, RSS, Reddit, Telegram, OSS Insight, OpenBB, and X with access requirements and evidence boundaries
 - Added default source packs for China, AI and technology, global affairs, business and markets, culture and society, and sports, plus per-source fallbacks and normalized source metadata
+- Hardened the local runner around a seven-phase artifact contract: `collect → normalize/deduplicate → rank/retain → verify → render → acceptance → polish`
+- Added stable item IDs plus canonical-URL and unique-title verification matching; unknown verdicts and incomplete evidence now fail closed or move to follow-up
+- Added `prepare`, machine-readable acceptance reports, deterministic deduplication and ranking, and watchlist-driven queries with concrete source targets
+- Replaced executable command strings with argv arrays; vendored adapters route only when entrypoints, credentials, and distribution licenses pass health checks
+- Defaulted final UTF-8 Markdown artifacts to `daily-news-YYYY-MM-DD.md` while preserving explicit output paths
 
 ### v0.1.3
 

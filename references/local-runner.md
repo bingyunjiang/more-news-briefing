@@ -4,13 +4,13 @@ Use this reference when you want the skill's core orchestration to stay fully lo
 
 ## Purpose
 
-The local runner is intentionally small.
-
-It owns only the parts this skill should own directly:
+The local runner owns the deterministic parts this skill should control directly:
 
 1. Contract normalization
 2. Topic-bucket query planning
-3. Final digest rendering from retained items
+3. Candidate normalization, stable IDs, deduplication, and ranking
+4. Verification-result validation and overlay
+5. Acceptance reporting and final digest rendering
 
 It does not try to replace live retrieval, browser access, or general-purpose search tooling.
 
@@ -28,6 +28,7 @@ python3 scripts/standalone_runner.py verify-results --items-file items.json
 python3 scripts/standalone_runner.py polish --draft-file digest.txt
 python3 scripts/standalone_runner.py pipeline --items-file items.json --draft-file digest.txt
 python3 scripts/standalone_runner.py execute --items-file items.json --draft-file digest.txt
+python3 scripts/standalone_runner.py prepare --items-file candidates.json --output-file items.json
 python3 scripts/standalone_runner.py queries --topic-mix default
 python3 scripts/standalone_runner.py digest --items-file items.json
 python3 scripts/standalone_runner.py finalize --items-file items.json
@@ -58,7 +59,9 @@ python3 scripts/standalone_runner.py contract \
   --depth analyst \
   --audience research \
   --specialty "charging / V2G / BESS" \
+  --specialty-scope "grid-scale storage and bidirectional charging" \
   --specialty-keywords "V2G, fast charging, BESS, bidirectional charging" \
+  --specialty-exclusions "consumer battery, residential storage" \
   --specialty-geography "China, EU" \
   --specialty-priority "policy"
 ```
@@ -73,7 +76,7 @@ Example:
 python3 scripts/standalone_runner.py queries --topic-mix default --specialty "charging / V2G / BESS"
 ```
 
-By default this emits grouped query packs with `core`, `news`, `institutional`, and `community` sections.
+By default this emits grouped query packs with `core`, `news`, `institutional`, `community`, and `watch` sections. Company, institution, and community watchlists create concrete watch queries. The response also includes `source_targets`, drawn from the concrete source catalog.
 
 Use `--flat` if a downstream tool wants a single flat list per bucket.
 
@@ -83,7 +86,7 @@ It now also includes `route_recommendation`, so a caller can get grouped queries
 
 ### `adapters`
 
-Read `references/skills/vendor-manifest.json` and report which vendored adapters are present in this repository.
+Read `references/skills/vendor-manifest.json` and report snapshot, entrypoint, credential, and license health.
 
 Examples:
 
@@ -92,7 +95,7 @@ python3 scripts/standalone_runner.py adapters
 python3 scripts/standalone_runner.py adapters --available-only
 ```
 
-This is the runtime discovery path for bundled optional adapters such as vendored `anysearch`, `deep-research`, and `humanizer-zh`.
+An adapter is routable only when its declared entrypoints exist, required credentials are available, and its license status is verified. Unresolved snapshots remain inspectable but are not selected automatically.
 
 ### `route`
 
@@ -138,7 +141,10 @@ When the collect route recommends vendored `anysearch`, the output now includes:
 1. `execution_mode: anysearch_batch_search`
 2. `anysearch_batches`
 3. a ready-to-use `payload` for each batch
-4. a `command_hint` pointing to the vendored `anysearch_cli.py`
+4. a shell-safe `command_argv` for the vendored `anysearch_cli.py`
+5. a `command_hint` rendered with shell quoting for display only
+
+Executors must run `command_argv` without a shell. Do not execute `command_hint` through `sh -c`, `shell=True`, or equivalent APIs.
 
 When the collect route stays on the built-in path, the output falls back to:
 
@@ -170,7 +176,17 @@ When the verify route stays on the built-in path, the output falls back to:
 1. `execution_mode: built_in_verification`
 2. `builtin_checks`
 
-The verify plan now exposes the stable result schema that downstream verification should write back into.
+The verify plan exposes the stable result schema that downstream verification should write back into. `verdict` is always required, and each result must provide at least one identity field: `item_id`, `canonical_url`, or `title`.
+
+Prefer `item_id`, then `canonical_url`, as the result identity. Title-only matching is retained only for backward compatibility when the title is unique.
+
+### `prepare`
+
+Normalize candidate objects, generate stable IDs, merge duplicates, rank retained items, and move structurally incomplete entries toward follow-up handling.
+
+```bash
+python3 scripts/standalone_runner.py prepare --items-file candidates.json --output-file items.json
+```
 
 ### `verify-results`
 
@@ -232,11 +248,15 @@ When the polish route stays on the built-in path, the output falls back to:
 
 ### `pipeline`
 
-Build one combined execution plan for the three downstream stages:
+Build one combined artifact plan for:
 
 1. `collect`
-2. `verify`
-3. `polish`
+2. `normalize`
+3. `rank`
+4. `verify`
+5. `render`
+6. `acceptance`
+7. `polish`
 
 Examples:
 
@@ -247,13 +267,7 @@ python3 scripts/standalone_runner.py pipeline --depth analyst --specialty "charg
 
 Use this command when an upper-layer orchestrator wants one JSON object instead of composing three separate subcommands.
 
-The `pipeline` output now also includes `handoff_package`, which normalizes:
-
-1. `collect`
-2. `verify`
-3. `polish`
-
-into one stable step list with:
+The `pipeline` output includes a `handoff_package` that normalizes the seven phases into one stable step list with:
 
 1. `step`
 2. `adapter`
@@ -278,8 +292,8 @@ Use this command when an upper-layer executor wants a flat ordered queue instead
 The output includes:
 
 1. `execute_queue.queue_length`
-2. one ordered task per collect batch / verify task / polish task
-3. normalized fields: `order`, `phase`, `executor`, `action`, `target`, `command`, `payload`
+2. one ordered task per collection batch, local transformation, verification task, render, acceptance gate, and polish step
+3. normalized fields: `order`, `phase`, `executor`, `action`, `target`, `command_argv`, `command`, `payload`
 4. scheduling metadata: `requires_network`, `consumes_artifact`, `produces_artifact`, `success_signal`
 5. `next_action_summary` for the first runnable queue item
 6. `artifact_paths` with the shared output-path convention for later stages
@@ -290,7 +304,7 @@ Current path convention:
 
 1. `items_file`: the retained-item JSON provided to `execute`
 2. `verification_results_file`: `<items-file-stem>.verification-results.json`
-3. `digest_output_file`: `<items-file-stem>.digest.txt` unless `--draft-file` is explicitly provided
+3. `digest_output_file`: `daily-news-YYYY-MM-DD.md` in the items-file directory unless `--draft-file` is explicitly provided
 
 Verify queue items now also expose `output_file`, so multiple verification tasks can append normalized results into the same shared `verification_results_file`.
 
@@ -299,7 +313,7 @@ Each verify queue item now also exposes:
 1. `result_stub_file`
 2. `merge_command_hint`
 
-Use `merge_command_hint` when a single verification task has produced one normalized result JSON and needs to append it into the shared verification-results file.
+Use `merge_command_argv` when a verification task needs to append a normalized result. `merge_command_hint` is display-only.
 
 ### `digest`
 
@@ -307,15 +321,11 @@ Render a standard digest from retained items stored in JSON.
 
 Expected item fields:
 
-1. `title`
-2. `what`
-3. `why`
-4. `bucket`
-5. `source_level`
-6. `evidence_status`
-7. `sources`
-8. optional `time_window`
-9. optional `follow_up`
+1. stable `item_id` or enough identity data to generate one
+2. `title`, `what`, `why`, and `bucket`
+3. enumerated `source_level` and `evidence_status`
+4. non-empty `sources`
+5. optional `canonical_url`, `time_window`, and `follow_up`
 
 Example:
 
@@ -376,7 +386,7 @@ Examples:
 ```bash
 python3 scripts/standalone_runner.py finalize --items-file items.json
 python3 scripts/standalone_runner.py finalize --items-file items.json --verification-results-file items.verification-results.json
-python3 scripts/standalone_runner.py finalize --items-file items.json --verification-results-file items.verification-results.json --output-file final-digest.txt
+python3 scripts/standalone_runner.py finalize --items-file items.json --verification-results-file items.verification-results.json --output-file custom-brief.md
 ```
 
 Use this command when you want one execution-facing step that:
@@ -384,7 +394,8 @@ Use this command when you want one execution-facing step that:
 1. reads retained items
 2. optionally overlays verification results
 3. renders the final digest
-4. optionally writes it to the standard digest artifact path
+4. writes it as UTF-8 Markdown to `daily-news-YYYY-MM-DD.md` by default
+5. uses `--output-file` when the caller needs a custom path or filename
 
 If `--verification-results-file` is omitted, `finalize` will try the standard shared path inferred from `items-file`.
 
