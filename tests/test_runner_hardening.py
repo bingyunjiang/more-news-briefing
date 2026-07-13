@@ -1,11 +1,28 @@
 import argparse
+import json
 import shlex
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from scripts import standalone_runner as runner
 
 
 class RunnerHardeningTests(unittest.TestCase):
+    def test_verification_contract_requires_verdict_and_declares_identity_fields(self) -> None:
+        contract = runner.build_verification_result_contract()
+
+        self.assertEqual(contract["required_fields"], ["verdict"])
+        self.assertEqual(
+            contract["identity_fields"],
+            {
+                "at_least_one": ["item_id", "canonical_url", "title"],
+                "preference_order": ["item_id", "canonical_url", "title"],
+                "title_fallback": "unique_titles_only",
+            },
+        )
+
     def test_anysearch_commands_expose_shell_safe_argv(self) -> None:
         contract = runner.Contract(
             specialty="BESS'; touch /tmp/should-not-run; echo '",
@@ -127,6 +144,42 @@ class RunnerHardeningTests(unittest.TestCase):
         self.assertIn("retained_items", consumed)
         self.assertIn("final_briefing", produced)
 
+    def test_execute_commands_expose_safe_merge_and_digest_argv(self) -> None:
+        contract = runner.Contract(mode="standard")
+        items = [
+            {
+                "title": "Quoted ' title",
+                "what": "Event",
+                "why": "Impact",
+                "bucket": "AI与科技",
+                "source_level": "次选证据",
+                "evidence_status": "交叉验证中",
+                "sources": ["source"],
+            }
+        ]
+        artifact_paths = runner.build_artifact_paths(
+            Path("items with spaces.json"), Path("digest with spaces.md")
+        )
+        handoff = runner.build_handoff_package(
+            contract,
+            runner.build_collect_execution_plan(contract),
+            runner.build_verify_execution_plan(contract, items),
+            runner.build_polish_execution_plan(contract),
+            artifact_paths,
+        )
+
+        queue = runner.build_execute_queue(handoff)["queue"]
+        verify_task = next(item for item in queue if item["phase"] == "verify")
+        render_task = next(item for item in queue if item["phase"] == "render")
+
+        self.assertIsInstance(verify_task["merge_command_argv"], list)
+        self.assertEqual(
+            verify_task["merge_command_hint"],
+            shlex.join(verify_task["merge_command_argv"]),
+        )
+        self.assertIsInstance(render_task["command_argv"], list)
+        self.assertIn("items with spaces.json", render_task["command_argv"])
+
     def test_invalid_contract_enums_are_rejected(self) -> None:
         args = argparse.Namespace(
             specialty="",
@@ -160,6 +213,49 @@ class RunnerHardeningTests(unittest.TestCase):
             if skill["name"] in discovery["available_adapters"]:
                 self.assertEqual(skill["health_status"], "ready")
                 self.assertEqual(skill["license_status"], "verified")
+
+    def test_adapter_manifest_routes_only_healthy_licensed_snapshots(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            for name in ("ready", "unlicensed", "credentialed"):
+                snapshot = root / name
+                snapshot.mkdir()
+                (snapshot / "entry.py").write_text("", encoding="utf-8")
+            manifest_path = root / "manifest.json"
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "skills": [
+                            {
+                                "name": "ready",
+                                "snapshot_path": str(root / "ready"),
+                                "entrypoints": ["entry.py"],
+                                "license_status": "verified",
+                            },
+                            {
+                                "name": "unlicensed",
+                                "snapshot_path": str(root / "unlicensed"),
+                                "entrypoints": ["entry.py"],
+                                "license_status": "unresolved",
+                            },
+                            {
+                                "name": "credentialed",
+                                "snapshot_path": str(root / "credentialed"),
+                                "entrypoints": ["entry.py"],
+                                "credential_required": True,
+                                "credential_env": "MNB_TEST_TOKEN",
+                                "license_status": "verified",
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with mock.patch.dict("os.environ", {}, clear=True):
+                discovery = runner.discover_vendored_adapters(manifest_path)
+
+            self.assertEqual(discovery["available_adapters"], ["ready"])
 
     def test_item_limit_must_be_positive(self) -> None:
         with self.assertRaisesRegex(ValueError, "item limit must be positive"):

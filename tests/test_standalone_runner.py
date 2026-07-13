@@ -30,6 +30,54 @@ def run_runner(*args: str) -> tuple[dict, str]:
 
 
 class StandaloneRunnerTests(unittest.TestCase):
+    def test_prepare_writes_normalized_ranked_items(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_file = Path(tmpdir) / "prepared.json"
+
+            payload, _ = run_runner(
+                "prepare",
+                "--items-file",
+                str(ITEMS_FILE),
+                "--output-file",
+                str(output_file),
+            )
+
+            self.assertEqual(payload["written_to"], str(output_file))
+            prepared = json.loads(output_file.read_text(encoding="utf-8"))
+            self.assertTrue(prepared)
+            self.assertTrue(all(item.get("item_id") for item in prepared))
+            self.assertEqual(payload["items"], prepared)
+
+    def test_finalize_rejects_blocking_items_without_writing_output(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            items_file = tmpdir_path / "invalid-items.json"
+            output_file = tmpdir_path / "should-not-exist.md"
+            items_file.write_text(
+                json.dumps([{"title": "Missing evidence"}]),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(RUNNER),
+                    "finalize",
+                    "--items-file",
+                    str(items_file),
+                    "--output-file",
+                    str(output_file),
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("failed acceptance", result.stderr)
+            self.assertFalse(output_file.exists())
+
     def test_finalize_writes_date_named_markdown_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
