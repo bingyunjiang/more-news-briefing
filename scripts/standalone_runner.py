@@ -10,8 +10,12 @@ This runner keeps the core orchestration local to the skill:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import re
+import shlex
+import sys
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -33,6 +37,8 @@ DEFAULT_TOPICS = ["AI与科技", "政治与政策", "商业与市场", "文化�
 DEFAULT_COUNT_TARGETS = {"quick": 5, "standard": 8, "analyst": 8}
 VERIFICATION_RESULT_REQUIRED_FIELDS = ["title", "verdict"]
 VERIFICATION_RESULT_OPTIONAL_FIELDS = [
+    "item_id",
+    "canonical_url",
     "claim",
     "why",
     "source_level",
@@ -41,6 +47,29 @@ VERIFICATION_RESULT_OPTIONAL_FIELDS = [
     "need_confirm",
     "follow_up",
 ]
+VERIFICATION_VERDICTS = {
+    "keep",
+    "confirm",
+    "downgrade",
+    "watch",
+    "move_to_watch",
+    "continue_tracking",
+}
+SOURCE_LEVELS = {"首选证据", "次选证据", "线索待证"}
+EVIDENCE_STATUSES = {"已确认", "交叉验证中", "待确认"}
+SOURCE_ROLES = {"discovery", "verification", "context", "watch"}
+CADENCES = {"one_off", "daily", "weekly", "custom"}
+SPECIALTY_PRIORITIES = {
+    "policy",
+    "product",
+    "products",
+    "financing",
+    "safety",
+    "standards",
+    "bids",
+    "deployments",
+    "research",
+}
 FORMAT_ALIASES = {
     "quick_brief": "quick_brief",
     "short_brief": "quick_brief",
@@ -51,6 +80,36 @@ FORMAT_ALIASES = {
     "feishu_long": "long_message",
     "long_message_exec": "long_message_exec",
     "leader_brief": "long_message_exec",
+}
+
+SOURCE_PACKS = {
+    "AI与科技": {
+        "discovery": ["Google News RSS", "IT之家", "Hacker News"],
+        "verification": ["官方公司或实验室博客", "论文或模型卡", "GitHub Releases"],
+        "context": ["OSS Insight", "Reddit"],
+    },
+    "政治与政策": {
+        "discovery": ["澎湃新闻", "中国日报", "GDELT"],
+        "verification": ["政府或监管机构", "法案或正式文件", "权威直接报道"],
+    },
+    "商业与市场": {
+        "discovery": ["Google News RSS", "腾讯财经", "网易财经"],
+        "verification": ["交易所公告", "公司投资者关系", "监管披露"],
+        "context": ["OpenBB"],
+    },
+    "文化与社会": {
+        "discovery": ["网易新闻", "腾讯新闻", "搜狐新闻"],
+        "verification": ["原始发布方", "平台或主办方", "权威直接报道"],
+    },
+    "体育": {
+        "discovery": ["腾讯体育", "中国日报体育"],
+        "verification": ["官方赛事", "联盟或俱乐部", "正式成绩页"],
+    },
+    "专项关注": {
+        "discovery": ["Google News RSS", "行业垂直来源"],
+        "verification": ["官方机构", "公司公告", "标准或招投标文件"],
+        "context": ["GitHub", "专业社区"],
+    },
 }
 
 QUERY_LIBRARY = {
@@ -157,7 +216,9 @@ class Contract:
     mode: str = DEFAULT_MODE
     source_roles: list[str] = field(default_factory=lambda: DEFAULT_SOURCE_ROLES.copy())
     specialty: str = ""
+    specialty_scope: str = ""
     specialty_keywords: list[str] = field(default_factory=list)
+    specialty_exclusions: list[str] = field(default_factory=list)
     specialty_geography: str = ""
     specialty_priority: str = ""
     company_watchlist: list[str] = field(default_factory=list)
@@ -177,7 +238,9 @@ class Contract:
             "mode": self.mode,
             "source_roles": self.source_roles,
             "specialty": self.specialty,
+            "specialty_scope": self.specialty_scope,
             "specialty_keywords": self.specialty_keywords,
+            "specialty_exclusions": self.specialty_exclusions,
             "specialty_geography": self.specialty_geography,
             "specialty_priority": self.specialty_priority,
             "company_watchlist": self.company_watchlist,
@@ -214,6 +277,17 @@ def discover_vendored_adapters(path: Path = VENDOR_MANIFEST_PATH) -> dict[str, A
         snapshot_rel = skill.get("snapshot_path", "")
         snapshot_abs = (REPO_ROOT / snapshot_rel).resolve() if snapshot_rel else None
         present = bool(snapshot_abs and snapshot_abs.exists())
+        entrypoints = [str(value) for value in skill.get("entrypoints", []) if str(value)]
+        entrypoint_paths = [
+            (snapshot_abs / entrypoint).resolve() for entrypoint in entrypoints
+        ] if snapshot_abs else []
+        entrypoints_ready = bool(entrypoint_paths) and all(path.exists() for path in entrypoint_paths)
+        credential_env = str(skill.get("credential_env", "")).strip()
+        credential_required = bool(skill.get("credential_required", False))
+        credential_ready = not credential_required or bool(os.environ.get(credential_env))
+        health_status = "ready" if present and entrypoints_ready and credential_ready else "unavailable"
+        license_status = str(skill.get("license_status", "unresolved")).strip().lower()
+        routable = health_status == "ready" and license_status == "verified"
         entry = {
             "name": skill.get("name", ""),
             "role": skill.get("role", ""),
@@ -222,11 +296,19 @@ def discover_vendored_adapters(path: Path = VENDOR_MANIFEST_PATH) -> dict[str, A
             "snapshot_path": snapshot_rel,
             "snapshot_present": present,
             "snapshot_abspath": str(snapshot_abs) if snapshot_abs else "",
+            "entrypoints": entrypoints,
+            "entrypoints_ready": entrypoints_ready,
+            "credential_env": credential_env,
+            "credential_required": credential_required,
+            "credential_ready": credential_ready,
+            "health_status": health_status,
+            "license_status": license_status,
+            "routable": routable,
             "license_note": skill.get("license_note", ""),
             "update_policy": skill.get("update_policy", ""),
         }
         discovered.append(entry)
-    available = [entry["name"] for entry in discovered if entry["snapshot_present"]]
+    available = [entry["name"] for entry in discovered if entry["routable"]]
     return {
         "manifest_found": manifest["manifest_found"],
         "manifest_path": manifest["manifest_path"],
@@ -241,6 +323,30 @@ def split_csv(value: str) -> list[str]:
     if not value:
         return []
     return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def validate_time_window(value: str) -> None:
+    if value in {"today", "last_24h", "last_3d", "last_7d"}:
+        return
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}(?:\.\.|:)\d{4}-\d{2}-\d{2}", value):
+        return
+    raise ValueError(f"invalid time_window: {value}")
+
+
+def validate_contract_values(args: argparse.Namespace) -> None:
+    if args.time_window:
+        validate_time_window(args.time_window)
+    if args.cadence and args.cadence not in CADENCES:
+        raise ValueError(f"invalid cadence: {args.cadence}")
+    if args.format and args.format not in FORMAT_ALIASES:
+        raise ValueError(f"invalid format: {args.format}")
+    roles = split_csv(args.source_roles)
+    unknown_roles = sorted(set(roles) - SOURCE_ROLES)
+    if unknown_roles:
+        raise ValueError("invalid source roles: " + ", ".join(unknown_roles))
+    priority = str(args.specialty_priority or "").strip().lower()
+    if priority and priority not in SPECIALTY_PRIORITIES:
+        raise ValueError(f"invalid specialty priority: {args.specialty_priority}")
 
 
 def normalize_topic_mix(topic_mix: str, specialty: str) -> list[str]:
@@ -274,14 +380,17 @@ def infer_source_roles(specialty: str, explicit_roles: list[str]) -> list[str]:
 
 
 def build_contract(args: argparse.Namespace) -> Contract:
+    validate_contract_values(args)
     specialty = args.specialty or ""
     depth = args.depth or DEFAULT_DEPTH
     audience = args.audience or DEFAULT_AUDIENCE
     contract = Contract()
     contract.specialty = specialty
+    contract.specialty_scope = getattr(args, "specialty_scope", "") or ""
     contract.specialty_keywords = split_csv(args.specialty_keywords) or split_csv(specialty.replace("/", ","))
+    contract.specialty_exclusions = split_csv(getattr(args, "specialty_exclusions", ""))
     contract.specialty_geography = args.specialty_geography or ""
-    contract.specialty_priority = args.specialty_priority or ""
+    contract.specialty_priority = (args.specialty_priority or "").lower()
     contract.topic_mix = normalize_topic_mix(args.topic_mix, specialty)
     contract.company_watchlist = split_csv(args.company_watchlist)
     contract.institution_watchlist = split_csv(args.institution_watchlist)
@@ -327,11 +436,30 @@ def cmd_contract(args: argparse.Namespace) -> int:
     return 0
 
 
+def build_watch_queries(contract: Contract) -> list[str]:
+    queries = [f"{name} official newsroom latest" for name in contract.company_watchlist]
+    queries.extend(
+        f"{name} official announcement policy latest"
+        for name in contract.institution_watchlist
+    )
+    queries.extend(
+        f"{name} latest release discussion"
+        for name in contract.community_watchlist
+    )
+    return queries
+
+
+def exclusion_terms(values: list[str]) -> str:
+    return " ".join(f'-"{value}"' if " " in value else f"-{value}" for value in values)
+
+
 def build_specialty_queries(contract: Contract) -> dict[str, list[str]]:
     base_terms = contract.specialty_keywords or [contract.specialty]
     geography = contract.specialty_geography.strip()
     priority = contract.specialty_priority.strip()
-    core = " ".join(base_terms[:4]).strip()
+    scope = contract.specialty_scope.strip()
+    excluded = exclusion_terms(contract.specialty_exclusions)
+    core = " ".join([*base_terms[:4], scope, excluded]).strip()
     news_parts = [core, "latest developments last 7 days"]
     institutional_seed = "policy official statement"
     if priority.lower() == "policy":
@@ -350,6 +478,7 @@ def build_specialty_queries(contract: Contract) -> dict[str, list[str]]:
         "news": [news] if news else [],
         "institutional": [institutional] if institutional else [],
         "community": [community] if community else [],
+        "watch": build_watch_queries(contract),
     }
 
 
@@ -359,15 +488,39 @@ def build_queries(contract: Contract, grouped: bool = True) -> dict[str, Any]:
         if topic == "专项关注":
             groups = build_specialty_queries(contract)
         else:
-            groups = QUERY_LIBRARY.get(topic, {"core": [topic], "news": [], "institutional": [], "community": []})
+            raw_groups = QUERY_LIBRARY.get(
+                topic,
+                {"core": [topic], "news": [], "institutional": [], "community": []},
+            )
+            groups = {name: list(values) for name, values in raw_groups.items()}
+            groups.setdefault("watch", [])
         if grouped:
             queries[topic] = groups
         else:
             flattened: list[str] = []
-            for group_name in ("core", "news", "institutional", "community"):
+            for group_name in ("core", "news", "institutional", "community", "watch"):
                 flattened.extend(groups.get(group_name, []))
             queries[topic] = flattened
+    watch_queries = build_watch_queries(contract)
+    if watch_queries and "专项关注" not in queries:
+        queries["观察名单"] = {"watch": watch_queries} if grouped else watch_queries
     return queries
+
+
+def build_source_targets(contract: Contract) -> dict[str, Any]:
+    return {
+        "catalog": "references/borrowed-source-catalog.md",
+        "source_roles": contract.source_roles,
+        "source_packs": {
+            topic: SOURCE_PACKS.get(topic, SOURCE_PACKS["专项关注"])
+            for topic in contract.topic_mix
+        },
+        "watchlists": {
+            "companies": contract.company_watchlist,
+            "institutions": contract.institution_watchlist,
+            "communities": contract.community_watchlist,
+        },
+    }
 
 
 def has_adapter(contract: Contract, name: str) -> bool:
@@ -468,7 +621,7 @@ def map_time_window_to_freshness(time_window: str) -> str:
 
 
 def choose_collect_query(groups: dict[str, list[str]]) -> str:
-    for key in ("news", "core", "institutional", "community"):
+    for key in ("news", "core", "institutional", "community", "watch"):
         values = groups.get(key, [])
         if values:
             return values[0]
@@ -479,7 +632,7 @@ def build_anysearch_batches(contract: Contract) -> list[dict[str, Any]]:
     grouped_queries = build_queries(contract, grouped=True)
     batch_topics = [
         ("Batch A", ["AI与科技", "政治与政策", "商业与市场"]),
-        ("Batch B", ["文化与社会", "体育", "专项关注"]),
+        ("Batch B", ["文化与社会", "体育", "专项关注", "观察名单"]),
     ]
     freshness = map_time_window_to_freshness(contract.time_window)
     max_results = DEFAULT_ANySEARCH_MAX_RESULTS.get(contract.depth, 5)
@@ -515,16 +668,22 @@ def build_anysearch_batches(contract: Contract) -> list[dict[str, Any]]:
             }
             for item in query_objects
         ]
+        payload_json = json.dumps(compact_payload, ensure_ascii=False)
+        command_argv = [
+            sys.executable,
+            str(anysearch_script),
+            "batch_search",
+            "--queries",
+            payload_json,
+        ]
         batches.append(
             {
                 "batch_name": batch_name,
                 "topics": [item["topic"] for item in query_objects],
                 "query_objects": query_objects,
                 "payload": compact_payload,
-                "command_hint": (
-                    f"python3 {anysearch_script} batch_search --queries "
-                    f"'{json.dumps(compact_payload, ensure_ascii=False)}'"
-                ),
+                "command_argv": command_argv,
+                "command_hint": shlex.join(command_argv),
             }
         )
     return batches
@@ -539,6 +698,7 @@ def build_collect_execution_plan(contract: Contract) -> dict[str, Any]:
         "reason": collect_step["reason"],
         "freshness": map_time_window_to_freshness(contract.time_window),
         "grouped_queries": grouped_queries,
+        "source_targets": build_source_targets(contract),
         "fallback_web_queries": {
             topic: choose_collect_query(groups) for topic, groups in grouped_queries.items()
         },
@@ -578,6 +738,7 @@ def build_deep_research_verify_tasks(contract: Contract, items: list[dict[str, A
         tasks.append(
             {
                 "task_id": f"verify-{idx}",
+                "item_id": item.get("item_id", ""),
                 "title": item["title"],
                 "bucket": item["bucket"],
                 "recommended_mode": "fact-check",
@@ -621,11 +782,13 @@ def build_builtin_verify_checks(items: list[dict[str, Any]]) -> list[dict[str, A
     return checks
 
 
-def make_result_stub_path(output_file: str, title: str) -> str:
+def make_result_stub_path(output_file: str, title: str, item_id: str = "") -> str:
     if not output_file:
         return ""
     output_path = Path(output_file)
     slug = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]+", "-", title).strip("-").lower() or "result"
+    if item_id:
+        slug = f"{slug}-{item_id[-8:]}"
     suffix = "".join(output_path.suffixes) or ".json"
     base_name = output_path.name[: -len(suffix)] if suffix else output_path.name
     return str(output_path.with_name(f"{base_name}.{slug}.json"))
@@ -649,6 +812,8 @@ def build_verification_result_contract() -> dict[str, Any]:
 
 def build_verification_result_template(item: dict[str, Any]) -> dict[str, Any]:
     return {
+        "item_id": item["item_id"],
+        "canonical_url": item.get("canonical_url", ""),
         "title": item["title"],
         "verdict": "",
         "claim": item["what"],
@@ -671,10 +836,15 @@ def build_builtin_verification_tasks(
 ) -> list[dict[str, Any]]:
     tasks: list[dict[str, Any]] = []
     for idx, item in enumerate(items, start=1):
-        result_stub_file = make_result_stub_path(verification_results_file, item["title"])
+        result_stub_file = make_result_stub_path(
+            verification_results_file,
+            item["title"],
+            item.get("item_id", ""),
+        )
         tasks.append(
             {
                 "task_id": f"builtin-verify-{idx}",
+                "item_id": item.get("item_id", ""),
                 "title": item["title"],
                 "checks": [
                     "交叉核对事件时间、地点、主体与数字",
@@ -812,7 +982,9 @@ def build_artifact_paths(
     if draft_file:
         digest_output_file = str(draft_file)
     elif items_file:
-        digest_output_file = str(items_file.with_name(f"{base_name}.digest.txt"))
+        digest_output_file = str(
+            items_file.with_name(f"daily-news-{date.today().isoformat()}.md")
+        )
 
     return {
         "items_file": digest_input_items_file,
@@ -865,6 +1037,32 @@ def build_handoff_package(
                 }
             )
 
+    steps.extend(
+        [
+            {
+                "step": "normalize",
+                "status": "ready",
+                "adapter": "built_in",
+                "execution_mode": "normalize_deduplicate",
+                "primary_inputs": {"source_targets": collect_plan.get("source_targets", {})},
+                "artifacts": [],
+                "fallback": {},
+            },
+            {
+                "step": "rank",
+                "status": "ready",
+                "adapter": "built_in",
+                "execution_mode": "rank_retain",
+                "primary_inputs": {
+                    "ranking_order": ["consequence", "recency", "attention", "relevance", "novelty"],
+                    "items_file": artifact_paths.get("items_file", ""),
+                },
+                "artifacts": [],
+                "fallback": {},
+            },
+        ]
+    )
+
     if verify_plan:
         if verify_plan.get("execution_mode") == "deep_research_fact_check_tasks":
             steps.append(
@@ -901,6 +1099,51 @@ def build_handoff_package(
                     "fallback": {},
                 }
             )
+    else:
+        steps.append(
+            {
+                "step": "verify",
+                "status": "blocked_on_retained_items",
+                "adapter": "built_in_verification",
+                "execution_mode": "built_in_verification",
+                "primary_inputs": {
+                    "verify_candidate_count": 0,
+                    "verify_candidates": [],
+                    "verification_results_file": artifact_paths.get("verification_results_file", ""),
+                },
+                "artifacts": [],
+                "fallback": {},
+            }
+        )
+
+    steps.extend(
+        [
+            {
+                "step": "render",
+                "status": "ready" if artifact_paths.get("items_file") else "blocked_on_retained_items",
+                "adapter": "built_in",
+                "execution_mode": "render_digest",
+                "primary_inputs": {
+                    "items_file": artifact_paths.get("items_file", ""),
+                    "verification_results_file": artifact_paths.get("verification_results_file", ""),
+                    "digest_output_file": artifact_paths.get("digest_output_file", ""),
+                },
+                "artifacts": [],
+                "fallback": {},
+            },
+            {
+                "step": "acceptance",
+                "status": "ready",
+                "adapter": "built_in",
+                "execution_mode": "acceptance_gate",
+                "primary_inputs": {
+                    "digest_output_file": artifact_paths.get("digest_output_file", ""),
+                },
+                "artifacts": [],
+                "fallback": {},
+            },
+        ]
+    )
 
     if polish_plan:
         if polish_plan.get("execution_mode") == "humanizer_zh_edit_task":
@@ -938,7 +1181,7 @@ def build_handoff_package(
             )
 
     return {
-        "version": 1,
+        "version": 2,
         "contract_summary": {
             "time_window": contract.time_window,
             "topic_mix": contract.topic_mix,
@@ -958,143 +1201,212 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
     ordinal = 1
     artifact_paths = handoff_package.get("artifact_paths", {})
     runner_path = Path(__file__).resolve()
+
+    def add_queue_item(**item: Any) -> None:
+        nonlocal ordinal
+        argv = item.pop("command_argv", [])
+        item["order"] = ordinal
+        item["command_argv"] = argv
+        item["command"] = shlex.join(argv) if argv else item.get("command", "")
+        queue.append(item)
+        ordinal += 1
+
     for step in handoff_package.get("steps", []):
         execution_mode = step.get("execution_mode", "")
         if execution_mode == "anysearch_batch_search":
             for batch in step.get("artifacts", []):
-                queue.append(
-                    {
-                        "order": ordinal,
-                        "phase": step["step"],
-                        "executor": step.get("adapter"),
-                        "action": "run_batch_search",
-                        "target": batch.get("batch_name", ""),
-                        "command": batch.get("command_hint", ""),
-                        "payload": batch.get("payload", []),
-                        "requires_network": True,
-                        "consumes_artifact": "query_pack",
-                        "produces_artifact": "candidate_pool",
-                        "success_signal": "batch_search returns result set for every query object",
-                    }
+                add_queue_item(
+                    phase=step["step"],
+                    executor=step.get("adapter"),
+                    action="run_batch_search",
+                    target=batch.get("batch_name", ""),
+                    command_argv=batch.get("command_argv", []),
+                    payload=batch.get("payload", []),
+                    requires_network=True,
+                    consumes_artifact="query_pack",
+                    produces_artifact="candidate_pool",
+                    success_signal="batch_search returns result set for every query object",
                 )
-                ordinal += 1
         elif execution_mode == "native_web_search":
-            queue.append(
-                {
-                    "order": ordinal,
-                    "phase": step["step"],
-                        "executor": step.get("adapter"),
-                        "action": "run_native_web_queries",
-                        "target": step["step"],
-                        "command": "",
-                        "payload": step.get("primary_inputs", {}).get("queries", {}),
-                        "requires_network": True,
-                        "consumes_artifact": "query_pack",
-                        "produces_artifact": "candidate_pool",
-                        "success_signal": "top queries return enough candidate headlines to move into ranking",
-                    }
-                )
-            ordinal += 1
+            add_queue_item(
+                phase=step["step"],
+                executor=step.get("adapter"),
+                action="run_native_web_queries",
+                target=step["step"],
+                payload=step.get("primary_inputs", {}).get("queries", {}),
+                requires_network=True,
+                consumes_artifact="query_pack",
+                produces_artifact="candidate_pool",
+                success_signal="top queries return enough candidate headlines to move into normalization",
+            )
+        elif execution_mode == "normalize_deduplicate":
+            add_queue_item(
+                phase="normalize",
+                executor="built_in",
+                action="normalize_and_deduplicate",
+                target="candidate_pool",
+                payload=step.get("primary_inputs", {}),
+                requires_network=False,
+                consumes_artifact="candidate_pool",
+                produces_artifact="normalized_candidates",
+                success_signal="candidate records have stable item_id values and duplicate stories are merged",
+            )
+        elif execution_mode == "rank_retain":
+            add_queue_item(
+                phase="rank",
+                executor="built_in",
+                action="rank_and_retain",
+                target=artifact_paths.get("items_file", "") or "retained-items.json",
+                payload=step.get("primary_inputs", {}),
+                requires_network=False,
+                consumes_artifact="normalized_candidates",
+                produces_artifact="retained_items",
+                success_signal="items are ranked and weak evidence is moved to follow-up",
+            )
         elif execution_mode == "deep_research_fact_check_tasks":
             for task in step.get("artifacts", []):
                 result_stub_file = make_result_stub_path(
                     step.get("primary_inputs", {}).get("verification_results_file", ""),
                     task.get("title", ""),
+                    task.get("item_id", ""),
                 )
-                queue.append(
-                    {
-                        "order": ordinal,
-                        "phase": step["step"],
-                        "executor": step.get("adapter"),
-                        "action": "run_fact_check_task",
-                        "target": task.get("title", ""),
-                        "command": task.get("command_prompt", ""),
-                        "payload": task,
-                        "requires_network": True,
-                        "consumes_artifact": "retained_item",
-                        "produces_artifact": "verification_result",
-                        "output_file": step.get("primary_inputs", {}).get("verification_results_file", ""),
-                        "result_stub_file": result_stub_file,
-                        "success_signal": "task returns keep/downgrade/watch judgment with stronger evidence",
-                        "next_action_summary": "append normalized verification result into the shared verification-results file",
-                        "merge_command_hint": (
-                            f"python3 {runner_path} verify-results "
-                            f"--items-file {artifact_paths.get('items_file', '')} "
-                            f"--results-file {result_stub_file} "
-                            f"--output-file {step.get('primary_inputs', {}).get('verification_results_file', '')} "
-                            f"--merge"
-                            if artifact_paths.get("items_file") and result_stub_file
-                            else ""
-                        ),
-                    }
+                merge_argv = []
+                if artifact_paths.get("items_file") and result_stub_file:
+                    merge_argv = [
+                        sys.executable,
+                        str(runner_path),
+                        "verify-results",
+                        "--items-file",
+                        artifact_paths["items_file"],
+                        "--results-file",
+                        result_stub_file,
+                        "--output-file",
+                        step.get("primary_inputs", {}).get("verification_results_file", ""),
+                        "--merge",
+                    ]
+                add_queue_item(
+                    phase=step["step"],
+                    executor=step.get("adapter"),
+                    action="run_fact_check_task",
+                    target=task.get("item_id") or task.get("title", ""),
+                    command=task.get("command_prompt", ""),
+                    payload=task,
+                    requires_network=True,
+                    consumes_artifact="retained_items",
+                    produces_artifact="verification_results",
+                    output_file=step.get("primary_inputs", {}).get("verification_results_file", ""),
+                    result_stub_file=result_stub_file,
+                    success_signal="task returns keep/downgrade/watch judgment with stronger evidence",
+                    next_action_summary="append normalized verification result into the shared verification-results file",
+                    merge_command_argv=merge_argv,
+                    merge_command_hint=shlex.join(merge_argv) if merge_argv else "",
                 )
-                ordinal += 1
         elif execution_mode == "built_in_verification":
-            queue.append(
-                {
-                    "order": ordinal,
-                    "phase": step["step"],
-                        "executor": step.get("adapter"),
-                        "action": "run_builtin_checks",
-                        "target": step["step"],
-                        "command": "",
-                        "payload": step.get("artifacts", []),
-                        "requires_network": False,
-                        "consumes_artifact": "retained_item",
-                        "produces_artifact": "verification_results_file",
-                        "output_file": step.get("primary_inputs", {}).get("verification_results_file", ""),
-                        "success_signal": "each candidate is normalized into keep/downgrade/watch style verification results",
-                        "next_action_summary": "write the built-in verification judgments into the shared verification-results file",
-                        "merge_command_hint": (
-                            f"python3 {runner_path} verify-results "
-                            f"--items-file {artifact_paths.get('items_file', '')} "
-                            f"--results-file <built-in-results.json> "
-                            f"--output-file {step.get('primary_inputs', {}).get('verification_results_file', '')} "
-                            f"--merge"
-                            if artifact_paths.get("items_file")
-                            else ""
-                        ),
-                    }
+            tasks = step.get("artifacts", []) or [{}]
+            for task in tasks:
+                result_stub_file = make_result_stub_path(
+                    step.get("primary_inputs", {}).get("verification_results_file", ""),
+                    task.get("title", "verification-result"),
+                    task.get("item_id", ""),
                 )
-            ordinal += 1
+                merge_argv: list[str] = []
+                if artifact_paths.get("items_file") and result_stub_file:
+                    merge_argv = [
+                        sys.executable,
+                        str(runner_path),
+                        "verify-results",
+                        "--items-file",
+                        artifact_paths["items_file"],
+                        "--results-file",
+                        result_stub_file,
+                        "--output-file",
+                        step.get("primary_inputs", {}).get("verification_results_file", ""),
+                        "--merge",
+                    ]
+                add_queue_item(
+                    phase=step["step"],
+                    executor=step.get("adapter"),
+                    action="run_builtin_checks",
+                    target=task.get("item_id") or task.get("title") or step["step"],
+                    payload=task,
+                    requires_network=False,
+                    consumes_artifact="retained_items",
+                    produces_artifact="verification_results",
+                    output_file=step.get("primary_inputs", {}).get("verification_results_file", ""),
+                    result_stub_file=result_stub_file,
+                    success_signal="candidate is normalized into keep/downgrade/watch verification result",
+                    next_action_summary="write the built-in verification judgment into the shared verification-results file",
+                    merge_command_hint=shlex.join(merge_argv) if merge_argv else "",
+                    merge_command_argv=merge_argv,
+                )
+        elif execution_mode == "render_digest":
+            inputs = step.get("primary_inputs", {})
+            render_argv: list[str] = []
+            if inputs.get("items_file"):
+                render_argv = [
+                    sys.executable,
+                    str(runner_path),
+                    "digest",
+                    "--items-file",
+                    inputs["items_file"],
+                ]
+                if inputs.get("verification_results_file"):
+                    render_argv.extend(
+                        ["--verification-results-file", inputs["verification_results_file"]]
+                    )
+            add_queue_item(
+                phase="render",
+                executor="built_in",
+                action="render_digest",
+                target=inputs.get("digest_output_file", "") or "draft-briefing.md",
+                command_argv=render_argv,
+                payload=inputs,
+                requires_network=False,
+                consumes_artifact="retained_items",
+                produces_artifact="draft_briefing",
+                success_signal="digest is rendered with source and evidence fields",
+            )
+        elif execution_mode == "acceptance_gate":
+            add_queue_item(
+                phase="acceptance",
+                executor="built_in",
+                action="run_acceptance_gate",
+                target=step.get("primary_inputs", {}).get("digest_output_file", ""),
+                payload=step.get("primary_inputs", {}),
+                requires_network=False,
+                consumes_artifact="draft_briefing",
+                produces_artifact="acceptance_report",
+                success_signal="no blocking evidence or structure issues remain",
+            )
         elif execution_mode == "humanizer_zh_edit_task":
             artifact = step.get("artifacts", [{}])[0]
-            queue.append(
-                {
-                    "order": ordinal,
-                    "phase": step["step"],
-                        "executor": step.get("adapter"),
-                        "action": "run_humanizer_edit",
-                        "target": step.get("primary_inputs", {}).get("draft_file", ""),
-                        "command": artifact.get("command_prompt", ""),
-                        "payload": artifact,
-                        "requires_network": False,
-                        "consumes_artifact": "draft_briefing",
-                        "produces_artifact": "polished_briefing",
-                        "success_signal": "draft reads more naturally without changing facts or evidence labels",
-                    }
-                )
-            ordinal += 1
+            add_queue_item(
+                phase=step["step"],
+                executor=step.get("adapter"),
+                action="run_humanizer_edit",
+                target=step.get("primary_inputs", {}).get("draft_file", ""),
+                command=artifact.get("command_prompt", ""),
+                payload=artifact,
+                requires_network=False,
+                consumes_artifact="acceptance_report",
+                produces_artifact="final_briefing",
+                success_signal="draft reads more naturally without changing facts or evidence labels",
+            )
         elif execution_mode == "built_in_polish":
-            queue.append(
-                {
-                    "order": ordinal,
-                    "phase": step["step"],
-                        "executor": step.get("adapter"),
-                        "action": "run_builtin_polish_checks",
-                        "target": step.get("primary_inputs", {}).get("draft_file", "") or step["step"],
-                        "command": "",
-                        "payload": step.get("artifacts", []),
-                        "requires_network": False,
-                        "consumes_artifact": "draft_briefing",
-                        "produces_artifact": "polish_checklist_result",
-                        "success_signal": "draft passes structure and wording checks",
-                    }
-                )
-            ordinal += 1
+            add_queue_item(
+                phase=step["step"],
+                executor=step.get("adapter"),
+                action="run_builtin_polish_checks",
+                target=step.get("primary_inputs", {}).get("draft_file", "") or step["step"],
+                payload=step.get("artifacts", []),
+                requires_network=False,
+                consumes_artifact="acceptance_report",
+                produces_artifact="final_briefing",
+                success_signal="draft passes structure and wording checks",
+            )
     next_action_summary = queue[0] if queue else {}
     return {
-        "version": 1,
+        "version": 2,
         "queue_length": len(queue),
         "artifact_paths": artifact_paths,
         "queue": queue,
@@ -1108,6 +1420,7 @@ def cmd_queries(args: argparse.Namespace) -> int:
         "adapter_discovery": contract.adapter_discovery,
         "route_recommendation": build_route_recommendation(contract),
         "queries": build_queries(contract, grouped=not args.flat),
+        "source_targets": build_source_targets(contract),
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
@@ -1202,6 +1515,27 @@ def cmd_execute(args: argparse.Namespace) -> int:
     verify_plan = build_verify_execution_plan(contract, items) if items else {}
     polish_plan = build_polish_execution_plan(contract, items, draft_file)
     handoff = build_handoff_package(contract, collect_plan, verify_plan, polish_plan, artifact_paths)
+    verification_init_argv: list[str] = []
+    digest_argv: list[str] = []
+    if artifact_paths["items_file"] and artifact_paths["verification_results_file"]:
+        verification_init_argv = [
+            sys.executable,
+            str(Path(__file__).resolve()),
+            "verify-results",
+            "--items-file",
+            artifact_paths["items_file"],
+            "--output-file",
+            artifact_paths["verification_results_file"],
+        ]
+        digest_argv = [
+            sys.executable,
+            str(Path(__file__).resolve()),
+            "digest",
+            "--items-file",
+            artifact_paths["items_file"],
+            "--verification-results-file",
+            artifact_paths["verification_results_file"],
+        ]
     payload = {
         "contract_summary": {
             "topic_mix": contract.topic_mix,
@@ -1212,18 +1546,10 @@ def cmd_execute(args: argparse.Namespace) -> int:
         "artifact_paths": artifact_paths,
         "handoff_package": handoff,
         "execute_queue": build_execute_queue(handoff),
-        "verification_results_init_command_hint": (
-            f"python3 {Path(__file__).resolve()} verify-results --items-file {artifact_paths['items_file']} "
-            f"--output-file {artifact_paths['verification_results_file']}"
-            if artifact_paths["items_file"] and artifact_paths["verification_results_file"]
-            else ""
-        ),
-        "digest_command_hint": (
-            f"python3 {Path(__file__).resolve()} digest --items-file {artifact_paths['items_file']} "
-            f"--verification-results-file {artifact_paths['verification_results_file']}"
-            if artifact_paths["items_file"] and artifact_paths["verification_results_file"]
-            else ""
-        ),
+        "verification_results_init_command_argv": verification_init_argv,
+        "verification_results_init_command_hint": shlex.join(verification_init_argv) if verification_init_argv else "",
+        "digest_command_argv": digest_argv,
+        "digest_command_hint": shlex.join(digest_argv) if digest_argv else "",
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
@@ -1233,6 +1559,8 @@ def load_items(path: Path) -> list[dict[str, Any]]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, list):
         raise ValueError("items file must contain a JSON array")
+    if any(not isinstance(item, dict) for item in data):
+        raise ValueError("every item must be a JSON object")
     return data
 
 
@@ -1254,32 +1582,44 @@ def load_verification_results(path: Path) -> list[dict[str, Any]]:
 
 
 def normalize_verification_result(result: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(result, dict):
+        raise ValueError("verification result must be a JSON object")
+    verdict = str(result.get("verdict", "")).strip().lower()
+    if verdict not in VERIFICATION_VERDICTS:
+        raise ValueError(f"unknown verification verdict: {verdict or '<empty>'}")
     normalized = {
         "title": str(result.get("title", "")).strip(),
-        "verdict": str(result.get("verdict", "")).strip().lower(),
+        "verdict": verdict,
     }
     for field in VERIFICATION_RESULT_OPTIONAL_FIELDS:
         value = result.get(field)
         if value not in (None, "", []):
             normalized[field] = value
+    if not normalized["title"] and not normalized.get("item_id") and not normalized.get("canonical_url"):
+        raise ValueError("verification result requires item_id, canonical_url, or title")
     return normalized
+
+
+def verification_identity(result: dict[str, Any]) -> str:
+    if result.get("item_id"):
+        return "id:" + str(result["item_id"])
+    if result.get("canonical_url"):
+        return "url:" + str(result["canonical_url"]).strip().lower()
+    return "title:" + normalize_identity_text(str(result.get("title", "")))
 
 
 def merge_verification_results(
     existing_results: list[dict[str, Any]],
     incoming_results: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    merged_by_title = {
-        result["title"]: normalize_verification_result(result)
-        for result in existing_results
-        if normalize_verification_result(result)["title"]
-    }
+    merged_by_identity: dict[str, dict[str, Any]] = {}
+    for result in existing_results:
+        normalized = normalize_verification_result(result)
+        merged_by_identity[verification_identity(normalized)] = normalized
     for result in incoming_results:
         normalized = normalize_verification_result(result)
-        if not normalized["title"]:
-            continue
-        merged_by_title[normalized["title"]] = normalized
-    return list(merged_by_title.values())
+        merged_by_identity[verification_identity(normalized)] = normalized
+    return list(merged_by_identity.values())
 
 
 def build_verification_result_package(
@@ -1292,10 +1632,21 @@ def build_verification_result_package(
     templates = build_verification_result_templates(verify_items)
     normalized_results: list[dict[str, Any]] = []
     if raw_results:
-        allowed_titles = {item["title"] for item in verify_items}
+        allowed_ids = {item["item_id"] for item in verify_items}
+        allowed_urls = {
+            item.get("canonical_url", "") for item in verify_items if item.get("canonical_url")
+        }
+        title_counts: dict[str, int] = {}
+        for item in verify_items:
+            key = normalize_identity_text(item["title"])
+            title_counts[key] = title_counts.get(key, 0) + 1
         for raw in raw_results:
             normalized = normalize_verification_result(raw)
-            if not normalized["title"] or normalized["title"] not in allowed_titles:
+            matched = normalized.get("item_id") in allowed_ids
+            matched = matched or normalized.get("canonical_url") in allowed_urls
+            title_key = normalize_identity_text(normalized.get("title", ""))
+            matched = matched or bool(title_key and title_counts.get(title_key) == 1)
+            if not matched:
                 continue
             normalized_results.append(normalized)
     return {
@@ -1308,17 +1659,65 @@ def build_verification_result_package(
     }
 
 
-def write_json(path: Path, payload: dict[str, Any]) -> None:
+def write_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def render_sources(sources: Any) -> str:
     if isinstance(sources, list):
-        return "、".join(str(item) for item in sources)
+        rendered: list[str] = []
+        for item in sources:
+            if isinstance(item, dict):
+                name = str(item.get("name") or item.get("source_name") or "").strip()
+                url = str(item.get("url") or item.get("canonical_url") or "").strip()
+                rendered.append(f"{name} ({url})" if name and url else name or url)
+            else:
+                rendered.append(str(item))
+        return "、".join(value for value in rendered if value)
     return str(sources or "")
 
 
+def normalize_identity_text(value: str) -> str:
+    return re.sub(r"\s+", " ", value).strip().casefold()
+
+
+def make_item_id(item: dict[str, Any]) -> str:
+    explicit = str(item.get("item_id", "")).strip()
+    if explicit:
+        return explicit
+    canonical_url = str(item.get("canonical_url", "")).strip().lower()
+    identity = canonical_url or normalize_identity_text(str(item.get("title", "")))
+    digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+    return f"news-{digest}"
+
+
+def normalize_sources(sources: Any) -> list[Any]:
+    if sources in (None, ""):
+        return []
+    if isinstance(sources, list):
+        return [source for source in sources if source not in (None, "", {})]
+    return [sources]
+
+
+def item_validation_errors(item: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    for field_name in ("title", "what", "why", "bucket"):
+        value = str(item.get(field_name, "")).strip()
+        if not value or value in {"未命名条目", "待补充", "未分类"}:
+            errors.append(f"missing_or_placeholder:{field_name}")
+    if not normalize_sources(item.get("sources")):
+        errors.append("missing:sources")
+    if item.get("source_level") not in SOURCE_LEVELS:
+        errors.append("invalid:source_level")
+    if item.get("evidence_status") not in EVIDENCE_STATUSES:
+        errors.append("invalid:evidence_status")
+    return errors
+
+
 def normalize_item(item: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(item, dict):
+        raise ValueError("each item must be a JSON object")
     normalized = dict(item)
     normalized.setdefault("title", "未命名条目")
     normalized.setdefault("what", "待补充")
@@ -1326,28 +1725,150 @@ def normalize_item(item: dict[str, Any]) -> dict[str, Any]:
     normalized.setdefault("bucket", "未分类")
     normalized.setdefault("source_level", "次选证据")
     normalized.setdefault("evidence_status", "交叉验证中")
-    normalized.setdefault("sources", [])
+    normalized["sources"] = normalize_sources(normalized.get("sources", []))
+    normalized["item_id"] = make_item_id(normalized)
+    normalized["canonical_url"] = str(normalized.get("canonical_url", "")).strip()
+    validation_errors = item_validation_errors(normalized)
+    if validation_errors:
+        normalized["_validation_errors"] = validation_errors
+        normalized["source_level"] = "线索待证"
+        normalized["evidence_status"] = "待确认"
     return normalized
+
+
+def item_dedup_key(item: dict[str, Any]) -> str:
+    if item.get("canonical_url"):
+        return "url:" + item["canonical_url"].lower()
+    return "title:" + normalize_identity_text(item["title"])
+
+
+def merge_item_sources(left: list[Any], right: list[Any]) -> list[Any]:
+    merged: list[Any] = []
+    seen: set[str] = set()
+    for source in [*left, *right]:
+        key = json.dumps(source, ensure_ascii=False, sort_keys=True) if isinstance(source, dict) else str(source)
+        if key not in seen:
+            seen.add(key)
+            merged.append(source)
+    return merged
+
+
+def normalize_and_deduplicate_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    deduplicated: dict[str, dict[str, Any]] = {}
+    for raw_item in items:
+        item = normalize_item(raw_item)
+        key = item_dedup_key(item)
+        if key not in deduplicated:
+            deduplicated[key] = item
+            continue
+        existing = deduplicated[key]
+        existing["sources"] = merge_item_sources(existing["sources"], item["sources"])
+        if existing.get("source_level") != "首选证据" and item.get("source_level") == "首选证据":
+            for field_name in ("what", "why", "source_level", "evidence_status", "canonical_url"):
+                if item.get(field_name):
+                    existing[field_name] = item[field_name]
+        if item.get("follow_up") and not existing.get("follow_up"):
+            existing["follow_up"] = item["follow_up"]
+        existing_errors = item_validation_errors(existing)
+        if existing_errors:
+            existing["_validation_errors"] = existing_errors
+        else:
+            existing.pop("_validation_errors", None)
+    return list(deduplicated.values())
+
+
+def item_rank_score(item: dict[str, Any], contract: Contract) -> float:
+    score = 0.0
+    score += 3.0 if item.get("source_level") == "首选证据" else 1.0
+    score += 2.0 if item.get("evidence_status") == "已确认" else 0.5
+    if item.get("bucket") in {"政治与政策", "商业与市场", "专项关注"}:
+        score += 1.0
+    if item.get("bucket") == "专项关注" and contract.specialty:
+        score += 2.0
+    for field_name in ("consequence", "recency", "attention", "relevance", "novelty"):
+        value = item.get(field_name, 0)
+        if isinstance(value, (int, float)):
+            score += float(value)
+    explicit = item.get("priority_score")
+    if isinstance(explicit, (int, float)):
+        score += float(explicit)
+    return score
+
+
+def prepare_items(contract: Contract, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    normalized = normalize_and_deduplicate_items(items)
+    return sorted(normalized, key=lambda item: item_rank_score(item, contract), reverse=True)
+
+
+def build_acceptance_report(
+    contract: Contract,
+    items: list[dict[str, Any]],
+    rendered: str = "",
+) -> dict[str, Any]:
+    normalized = [normalize_item(item) for item in items]
+    main_items, follow_ups = split_items(normalized)
+    blocking_issues: list[str] = []
+    warnings: list[str] = []
+    for item in normalized:
+        for issue in item.get("_validation_errors", []):
+            blocking_issues.append(f"{item['item_id']}:{issue}")
+    for item in main_items:
+        if item["bucket"] in {"政治与政策", "商业与市场", "专项关注"} and (
+            item["source_level"] != "首选证据" or item["evidence_status"] != "已确认"
+        ):
+            warnings.append(f"high_impact_needs_stronger_evidence:{item['item_id']}")
+    target = DEFAULT_COUNT_TARGETS.get(contract.depth, DEFAULT_COUNT_TARGETS["standard"])
+    if main_items and len(main_items) < min(5, target):
+        warnings.append(f"retained_item_count_below_target:{len(main_items)}/{target}")
+    if rendered and "来源：" not in rendered and main_items:
+        blocking_issues.append("rendered_digest_missing_source_lines")
+    return {
+        "version": 1,
+        "passed": not blocking_issues,
+        "blocking_issues": list(dict.fromkeys(blocking_issues)),
+        "warnings": list(dict.fromkeys(warnings)),
+        "retained_count": len(main_items),
+        "follow_up_count": len(follow_ups),
+    }
 
 
 def apply_verification_results(
     items: list[dict[str, Any]],
     verification_results: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    by_title = {
-        str(result.get("title", "")).strip(): result
-        for result in verification_results
-        if str(result.get("title", "")).strip()
+    normalized_results = [normalize_verification_result(result) for result in verification_results]
+    by_id = {
+        str(result["item_id"]): result for result in normalized_results if result.get("item_id")
     }
+    by_url = {
+        str(result["canonical_url"]).strip().lower(): result
+        for result in normalized_results
+        if result.get("canonical_url")
+    }
+    title_results = {
+        normalize_identity_text(result["title"]): result
+        for result in normalized_results
+        if result.get("title")
+    }
+    title_counts: dict[str, int] = {}
+    normalized_items = [normalize_item(item) for item in items]
+    for item in normalized_items:
+        key = normalize_identity_text(item["title"])
+        title_counts[key] = title_counts.get(key, 0) + 1
     updated_items: list[dict[str, Any]] = []
-    for item in items:
-        normalized = normalize_item(item)
-        result = by_title.get(normalized["title"])
+    for normalized in normalized_items:
+        result = by_id.get(normalized["item_id"])
+        if not result and normalized.get("canonical_url"):
+            result = by_url.get(normalized["canonical_url"].lower())
+        title_key = normalize_identity_text(normalized["title"])
+        if not result and title_counts.get(title_key) == 1:
+            result = title_results.get(title_key)
         if not result:
             updated_items.append(normalized)
             continue
 
         merged = dict(normalized)
+        verdict = result["verdict"]
         if result.get("claim"):
             merged["what"] = result["claim"]
         if result.get("why"):
@@ -1360,7 +1881,6 @@ def apply_verification_results(
             merged["sources"] = result["sources"]
         if result.get("need_confirm"):
             merged["need_confirm"] = result["need_confirm"]
-        verdict = str(result.get("verdict", "")).strip().lower()
         if verdict in {"watch", "move_to_watch", "continue_tracking"}:
             # A watch verdict should reliably move the item into the follow-up section.
             merged["source_level"] = "线索待证"
@@ -1372,6 +1892,13 @@ def apply_verification_results(
         elif verdict in {"keep", "confirm"}:
             merged["source_level"] = result.get("source_level", merged["source_level"])
             merged["evidence_status"] = result.get("evidence_status", merged["evidence_status"])
+        remaining_errors = item_validation_errors(merged)
+        if remaining_errors:
+            merged["_validation_errors"] = remaining_errors
+            merged["source_level"] = "线索待证"
+            merged["evidence_status"] = "待确认"
+        else:
+            merged.pop("_validation_errors", None)
         updated_items.append(merged)
     return updated_items
 
@@ -1381,7 +1908,11 @@ def split_items(items: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list
     follow_ups: list[str] = []
     for item in items:
         normalized = normalize_item(item)
-        if normalized["source_level"] == "线索待证" or normalized["evidence_status"] == "待确认":
+        if (
+            normalized.get("_validation_errors")
+            or normalized["source_level"] == "线索待证"
+            or normalized["evidence_status"] == "待确认"
+        ):
             follow_ups.append(normalized["title"])
             if normalized.get("follow_up"):
                 follow_ups.append(str(normalized["follow_up"]))
@@ -1389,11 +1920,13 @@ def split_items(items: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list
         main_items.append(normalized)
         if normalized.get("follow_up"):
             follow_ups.append(str(normalized["follow_up"]))
-    return main_items, follow_ups
+    return main_items, list(dict.fromkeys(follow_ups))
 
 
 def choose_item_limit(contract: Contract, explicit_limit: int | None) -> int:
-    if explicit_limit:
+    if explicit_limit is not None:
+        if explicit_limit <= 0:
+            raise ValueError("item limit must be positive")
         return explicit_limit
     return DEFAULT_COUNT_TARGETS.get(contract.depth, DEFAULT_COUNT_TARGETS["standard"])
 
@@ -1561,7 +2094,7 @@ def render_digest(contract: Contract, items: list[dict[str, Any]], item_limit: i
 
 def cmd_digest(args: argparse.Namespace) -> int:
     contract = build_contract(args)
-    items = load_items(Path(args.items_file))
+    items = prepare_items(contract, load_items(Path(args.items_file)))
     if args.verification_results_file:
         verification_results = load_verification_results(Path(args.verification_results_file))
         items = apply_verification_results(items, verification_results)
@@ -1569,32 +2102,56 @@ def cmd_digest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_prepare(args: argparse.Namespace) -> int:
+    contract = build_contract(args)
+    items = prepare_items(contract, load_items(Path(args.items_file)))
+    payload = {
+        "version": 1,
+        "contract": contract.to_dict(),
+        "items": items,
+        "acceptance_report": build_acceptance_report(contract, items),
+    }
+    if args.output_file:
+        write_json(Path(args.output_file), items)
+        payload["written_to"] = args.output_file
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
 def cmd_finalize(args: argparse.Namespace) -> int:
     contract = build_contract(args)
     items_file = Path(args.items_file)
-    items = load_items(items_file)
+    items = prepare_items(contract, load_items(items_file))
     artifact_paths = build_artifact_paths(items_file, Path(args.output_file) if args.output_file else None)
     verification_results_file = args.verification_results_file or artifact_paths["verification_results_file"]
     if verification_results_file and Path(verification_results_file).exists():
         verification_results = load_verification_results(Path(verification_results_file))
         items = apply_verification_results(items, verification_results)
     output = render_digest(contract, items, args.item_limit)
+    acceptance_report = build_acceptance_report(contract, items, output)
+    if not acceptance_report["passed"]:
+        raise ValueError(
+            "final digest failed acceptance: " + ", ".join(acceptance_report["blocking_issues"])
+        )
     output_file = args.output_file or artifact_paths["digest_output_file"]
     payload = {
         "artifact_paths": artifact_paths,
         "verification_results_file_used": verification_results_file if verification_results_file else "",
         "output_file": output_file,
         "rendered": output,
+        "acceptance_report": acceptance_report,
     }
     if output_file:
-        Path(output_file).write_text(output, encoding="utf-8")
+        output_path = Path(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(output, encoding="utf-8")
         payload["written_to"] = output_file
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 
 
 def cmd_verify_results(args: argparse.Namespace) -> int:
-    items = load_items(Path(args.items_file))
+    items = normalize_and_deduplicate_items(load_items(Path(args.items_file)))
     raw_results = load_verification_results(Path(args.results_file)) if args.results_file else None
     package = build_verification_result_package(items, raw_results)
 
@@ -1627,16 +2184,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     def add_common(subparser: argparse.ArgumentParser) -> None:
         subparser.add_argument("--time-window", dest="time_window")
-        subparser.add_argument("--cadence")
+        subparser.add_argument("--cadence", choices=sorted(CADENCES))
         subparser.add_argument("--topic-mix", default="default")
         subparser.add_argument("--depth", choices=["quick", "standard", "analyst"])
-        subparser.add_argument("--format")
+        subparser.add_argument("--format", choices=sorted(FORMAT_ALIASES))
         subparser.add_argument("--audience", choices=["personal", "executive", "research", "public"])
         subparser.add_argument("--mode", choices=["full", "standard", "minimal"])
         subparser.add_argument("--specialty", default="")
+        subparser.add_argument("--specialty-scope", default="")
         subparser.add_argument("--specialty-keywords", default="")
+        subparser.add_argument("--specialty-exclusions", default="")
         subparser.add_argument("--specialty-geography", default="")
-        subparser.add_argument("--specialty-priority", default="")
+        subparser.add_argument("--specialty-priority", choices=sorted(SPECIALTY_PRIORITIES), default="")
         subparser.add_argument("--source-roles", default="")
         subparser.add_argument("--company-watchlist", default="")
         subparser.add_argument("--institution-watchlist", default="")
@@ -1696,6 +2255,15 @@ def build_parser() -> argparse.ArgumentParser:
     execute_parser.add_argument("--draft-file")
     execute_parser.set_defaults(func=cmd_execute)
 
+    prepare_parser = subparsers.add_parser(
+        "prepare",
+        help="Normalize, deduplicate, rank, and retain candidate items",
+    )
+    add_common(prepare_parser)
+    prepare_parser.add_argument("--items-file", required=True)
+    prepare_parser.add_argument("--output-file")
+    prepare_parser.set_defaults(func=cmd_prepare)
+
     digest_parser = subparsers.add_parser("digest", help="Render a digest from JSON items")
     add_common(digest_parser)
     digest_parser.add_argument("--items-file", required=True)
@@ -1703,7 +2271,7 @@ def build_parser() -> argparse.ArgumentParser:
     digest_parser.add_argument("--item-limit", type=int)
     digest_parser.set_defaults(func=cmd_digest)
 
-    finalize_parser = subparsers.add_parser("finalize", help="Render and optionally write the final digest artifact")
+    finalize_parser = subparsers.add_parser("finalize", help="Render and write the final Markdown digest artifact")
     add_common(finalize_parser)
     finalize_parser.add_argument("--items-file", required=True)
     finalize_parser.add_argument("--verification-results-file")

@@ -3,6 +3,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 
 
@@ -29,6 +30,23 @@ def run_runner(*args: str) -> tuple[dict, str]:
 
 
 class StandaloneRunnerTests(unittest.TestCase):
+    def test_finalize_writes_date_named_markdown_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            items_file = tmpdir_path / "items.json"
+            items_file.write_text(ITEMS_FILE.read_text(encoding="utf-8"), encoding="utf-8")
+
+            finalize_payload, _ = run_runner(
+                "finalize",
+                "--items-file",
+                str(items_file),
+            )
+
+            expected_output = tmpdir_path / f"daily-news-{date.today().isoformat()}.md"
+            self.assertEqual(finalize_payload["written_to"], str(expected_output))
+            self.assertTrue(expected_output.exists())
+            self.assertIn("一次刷尽近期热点", expected_output.read_text(encoding="utf-8"))
+
     def test_execute_verify_tasks_expose_merge_command_hint(self) -> None:
         payload, _ = run_runner("execute", "--items-file", str(ITEMS_FILE), "--depth", "analyst")
         verify_items = [item for item in payload["execute_queue"]["queue"] if item["phase"] == "verify"]
