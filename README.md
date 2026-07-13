@@ -178,6 +178,8 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 - 新增 `prepare`、机器可读验收报告、确定性去重排序，以及由专项范围、排除项和观察名单生成的查询与来源目标
 - 所有可执行命令改为参数数组，字符串命令仅用于展示；vendored adapter 只有在入口、凭证和许可证均通过检查时才会自动路由
 - 最终简报默认保存为 UTF-8 的 `daily-news-YYYY-MM-DD.md`，并支持调用方指定输出路径
+- 使用 CodeGraph 复核 runner 的调用链、影响范围和测试索引，并补齐 `prepare`、阻断式验收、安全命令参数及 adapter 路由回归测试
+- 测试扩展至 20 条，runner 可计量行覆盖率达到 86.1%，同时通过 Python 语法检查和 skill 结构校验
 
 ### v0.1.3
 
@@ -349,6 +351,8 @@ Default delivery format:
 - Added `prepare`, machine-readable acceptance reports, deterministic deduplication and ranking, and watchlist-driven queries with concrete source targets
 - Replaced executable command strings with argv arrays; vendored adapters route only when entrypoints, credentials, and distribution licenses pass health checks
 - Defaulted final UTF-8 Markdown artifacts to `daily-news-YYYY-MM-DD.md` while preserving explicit output paths
+- Used CodeGraph to review runner call paths, impact scope, and test indexing, then added regressions for `prepare`, blocking acceptance, safe command argv, and adapter routing
+- Expanded the suite to 20 tests with 86.1% measurable runner line coverage, while retaining clean Python syntax and skill-structure validation
 
 ### v0.1.3
 
