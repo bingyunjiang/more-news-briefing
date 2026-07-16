@@ -364,6 +364,9 @@ def normalize_cognitive_features(value: str | None) -> list[str]:
         return DEFAULT_COGNITIVE_FEATURES.copy()
     if value.strip().lower() in {"", "off", "none"}:
         return []
+    if value.strip().lower() == "all":
+        return ["interrogate", "sprout", "commentary", "continuity"]
+
     return list(dict.fromkeys(part.lower() for part in split_csv(value)))
 
 

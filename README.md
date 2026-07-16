@@ -92,6 +92,18 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 它不是把搜索结果简单堆起来，也不是把已有材料机械改写，而是把“信息收集、去重、判断优先级、压缩表达、稳定交付”串成一条完整工作流，更适合长期做日报、周报和专题跟踪。
 
+
+### 认知增强：默认紧凑，可开启扩展洞察
+
+简报默认只运行后台 `interrogate`（证据风险检查），不在正式简报中展示。如果你想看到跨条目信号点评、基于依据的洞察拓展和下期追踪，可以：
+
+- 在调用时指定 `cognitive_features=interrogate,sprout,commentary,continuity`
+- 或使用快捷别名 `cognitive_features=all`（等价于开启全部可见认知层）
+- 对 runner 命令使用 `--cognitive-features all`
+- 如果智能体检测到你的请求包含“测试”、“演示”、“展示认知增强”等意图，会自动启用全认知层
+
+所有可见洞察均标注 `依据` 和 `性质：推断`，不会把推测写成事实。
+
 ### 设计原则
 
 - 先保证信息覆盖面，再追求措辞润色

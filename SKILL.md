@@ -192,7 +192,7 @@ Lock down the core contract variables before collecting:
 5. Mode: `full`, `standard`, or `minimal`
 6. Source-role preference: discovery, verification, context, and watch balance when recurring monitoring matters
 7. Watchlists: company, institution, and community watchlists when recurring monitoring matters
-8. Cognitive features: default `interrogate`, or a user-selected subset of `interrogate`, `sprout`, `commentary`, and `continuity`
+8. Cognitive features: default `interrogate`; use `all` for `interrogate,sprout,commentary,continuity`; or a user-selected subset
 
 If one or more variables are missing, make the smallest reasonable assumption and state it in the final output.
 
@@ -253,6 +253,9 @@ For each retained item, include:
 5. One or more sources if the user asked for links or attribution
 
 After the evidence-backed digest is stable, apply the configured cognitive layer. Keep `interrogate` as a non-visible review gate by default. Render `commentary`, `sprout`, or `continuity` only when enabled and supported by structured item fields. Label every visible extension as inference and state its basis.
+
+If the user explicitly asks to test, demo, preview, or see the cognitive features in action, enable `interrogate,sprout,commentary,continuity` instead of using only the default `interrogate`.
+
 
 Avoid filler transitions, generic optimism, and repetitive framing.
 

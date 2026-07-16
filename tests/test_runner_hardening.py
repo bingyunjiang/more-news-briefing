@@ -284,6 +284,20 @@ class RunnerHardeningTests(unittest.TestCase):
                 parser.parse_args(["contract", "--cognitive-features", "interrogate,guess"])
             )
 
+    def test_cognitive_features_all_alias(self) -> None:
+        parser = runner.build_parser()
+        all_contract = runner.build_contract(
+            parser.parse_args(["contract", "--cognitive-features", "all"])
+        )
+        partial_contract = runner.build_contract(
+            parser.parse_args(["contract", "--cognitive-features", "interrogate,sprout"])
+        )
+        self.assertEqual(
+            all_contract.cognitive_features,
+            ["interrogate", "sprout", "commentary", "continuity"],
+        )
+        self.assertEqual(partial_contract.cognitive_features, ["interrogate", "sprout"])
+
     def test_sprout_rendering_requires_basis_and_labels_inference(self) -> None:
         item = {
             "title": "Policy update",
