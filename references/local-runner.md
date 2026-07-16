@@ -11,6 +11,7 @@ The local runner owns the deterministic parts this skill should control directly
 3. Candidate normalization, stable IDs, deduplication, and ranking
 4. Verification-result validation and overlay
 5. Acceptance reporting and final digest rendering
+6. Configurable cognitive review and section rendering
 
 It does not try to replace live retrieval, browser access, or general-purpose search tooling.
 
@@ -31,6 +32,7 @@ python3 scripts/standalone_runner.py execute --items-file items.json --draft-fil
 python3 scripts/standalone_runner.py prepare --items-file candidates.json --output-file items.json
 python3 scripts/standalone_runner.py queries --topic-mix default
 python3 scripts/standalone_runner.py digest --items-file items.json
+python3 scripts/standalone_runner.py digest --items-file items.json --cognitive-features interrogate,sprout
 python3 scripts/standalone_runner.py finalize --items-file items.json
 ```
 
@@ -255,8 +257,9 @@ Build one combined artifact plan for:
 3. `rank`
 4. `verify`
 5. `render`
-6. `acceptance`
-7. `polish`
+6. `cognition`
+7. `acceptance`
+8. `polish`
 
 Examples:
 
@@ -267,7 +270,7 @@ python3 scripts/standalone_runner.py pipeline --depth analyst --specialty "charg
 
 Use this command when an upper-layer orchestrator wants one JSON object instead of composing three separate subcommands.
 
-The `pipeline` output includes a `handoff_package` that normalizes the seven phases into one stable step list with:
+The `pipeline` output includes a `handoff_package` that normalizes the phases into one stable step list with:
 
 1. `step`
 2. `adapter`
@@ -326,6 +329,7 @@ Expected item fields:
 3. enumerated `source_level` and `evidence_status`
 4. non-empty `sources`
 5. optional `canonical_url`, `time_window`, and `follow_up`
+6. optional `signal_commentary`, `insight_extensions`, `continuity`, `causal_claim`, `causal_basis`, and `counterevidence_checked`
 
 Example:
 
@@ -341,6 +345,7 @@ python3 scripts/standalone_runner.py digest --items-file items.json --format qui
 python3 scripts/standalone_runner.py digest --items-file items.json --format analyst_watch
 python3 scripts/standalone_runner.py digest --items-file items.json --format long_message
 python3 scripts/standalone_runner.py digest --items-file items.json --audience executive
+python3 scripts/standalone_runner.py digest --items-file items.json --cognitive-features interrogate,sprout,continuity
 ```
 
 Supported rendering rules include:
@@ -352,6 +357,8 @@ Supported rendering rules include:
 5. `long_message_exec`
 
 If `--format` is omitted, the runner infers a default from `depth` and `audience`.
+
+`--cognitive-features` accepts `interrogate`, `sprout`, `commentary`, and `continuity`. The default is `interrogate`; pass `off` to preserve a summary-only output. Visible extensions render only when their structured fields are present, and each sprout extension includes its basis plus `性质：推断`.
 
 The `contract` output now also includes `adapter_discovery`, so downstream callers can resolve the briefing contract and inspect local adapter availability in one call.
 

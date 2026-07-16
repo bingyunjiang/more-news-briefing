@@ -89,4 +89,6 @@ Watch next
 
 ## Editing notes
 
+Before polish, run the configured `interrogate` review: challenge causal wording, forecasts written as facts, overclaimed headlines, single-source high-impact items, and missing counterevidence. Keep these findings in the machine report unless the reader needs an analyst-style open-question section.
+
 Use `humanizer-zh` for the final pass when the digest sounds too templated, too padded, or too much like stitched search output.

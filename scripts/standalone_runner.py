@@ -31,6 +31,7 @@ DEFAULT_DEPTH = "standard"
 DEFAULT_FORMAT = "standard_digest"
 DEFAULT_AUDIENCE = "research"
 DEFAULT_MODE = "full"
+DEFAULT_COGNITIVE_FEATURES = ["interrogate"]
 DEFAULT_SOURCE_ROLES = ["discovery", "verification"]
 SPECIALTY_SOURCE_ROLES = ["discovery", "verification", "context", "watch"]
 DEFAULT_TOPICS = ["AI与科技", "政治与政策", "商业与市场", "文化与社会", "体育"]
@@ -60,6 +61,7 @@ SOURCE_LEVELS = {"首选证据", "次选证据", "线索待证"}
 EVIDENCE_STATUSES = {"已确认", "交叉验证中", "待确认"}
 SOURCE_ROLES = {"discovery", "verification", "context", "watch"}
 CADENCES = {"one_off", "daily", "weekly", "custom"}
+COGNITIVE_FEATURES = {"interrogate", "sprout", "commentary", "continuity"}
 SPECIALTY_PRIORITIES = {
     "policy",
     "product",
@@ -215,6 +217,7 @@ class Contract:
     format: str = DEFAULT_FORMAT
     audience: str = DEFAULT_AUDIENCE
     mode: str = DEFAULT_MODE
+    cognitive_features: list[str] = field(default_factory=lambda: DEFAULT_COGNITIVE_FEATURES.copy())
     source_roles: list[str] = field(default_factory=lambda: DEFAULT_SOURCE_ROLES.copy())
     specialty: str = ""
     specialty_scope: str = ""
@@ -237,6 +240,7 @@ class Contract:
             "format": self.format,
             "audience": self.audience,
             "mode": self.mode,
+            "cognitive_features": self.cognitive_features,
             "source_roles": self.source_roles,
             "specialty": self.specialty,
             "specialty_scope": self.specialty_scope,
@@ -348,6 +352,19 @@ def validate_contract_values(args: argparse.Namespace) -> None:
     priority = str(args.specialty_priority or "").strip().lower()
     if priority and priority not in SPECIALTY_PRIORITIES:
         raise ValueError(f"invalid specialty priority: {args.specialty_priority}")
+    raw_features = getattr(args, "cognitive_features", None)
+    features = normalize_cognitive_features(raw_features) if raw_features is not None else []
+    unknown_features = sorted(set(features) - COGNITIVE_FEATURES)
+    if unknown_features:
+        raise ValueError("invalid cognitive features: " + ", ".join(unknown_features))
+
+
+def normalize_cognitive_features(value: str | None) -> list[str]:
+    if value is None or value.strip().lower() == "default":
+        return DEFAULT_COGNITIVE_FEATURES.copy()
+    if value.strip().lower() in {"", "off", "none"}:
+        return []
+    return list(dict.fromkeys(part.lower() for part in split_csv(value)))
 
 
 def normalize_topic_mix(topic_mix: str, specialty: str) -> list[str]:
@@ -419,6 +436,14 @@ def build_contract(args: argparse.Namespace) -> Contract:
     contract.mode = args.mode or DEFAULT_MODE
     if not args.mode:
         contract.inferred_assumptions.append(f"mode={DEFAULT_MODE}")
+
+    contract.cognitive_features = normalize_cognitive_features(
+        getattr(args, "cognitive_features", None)
+    )
+    if getattr(args, "cognitive_features", None) is None:
+        contract.inferred_assumptions.append(
+            "cognitive_features=" + "+".join(DEFAULT_COGNITIVE_FEATURES)
+        )
 
     contract.format = normalize_format(args.format, contract.depth, contract.audience)
     if not args.format:
@@ -908,6 +933,8 @@ def build_polish_goals(contract: Contract) -> list[str]:
         )
     if contract.audience == "executive":
         goals.append("优先保留判断句，减少背景铺垫。")
+    if set(contract.cognitive_features) & {"sprout", "commentary", "continuity"}:
+        goals.append("保持事实、编辑判断、推断和下期追踪之间的边界。")
     return goals
 
 
@@ -925,6 +952,8 @@ def build_builtin_polish_checks(contract: Contract) -> list[str]:
                 "检查结尾停在继续跟踪，不加礼貌性尾巴",
             ]
         )
+    if "sprout" in contract.cognitive_features:
+        checks.append("检查认知延伸是否保留依据与性质：推断标签")
     return checks
 
 
@@ -956,6 +985,7 @@ def build_polish_execution_plan(
                 "不新增未核验事实",
                 "不改写来源级别、证据状态和来源含义",
                 "不删除继续跟踪中仍需保留的观察点",
+                "不删除认知延伸的依据与性质：推断标签",
             ],
             "command_prompt": (
                 "Use vendored humanizer-zh to revise the Chinese briefing draft so it reads more naturally "
@@ -1133,6 +1163,20 @@ def build_handoff_package(
                     "items_file": artifact_paths.get("items_file", ""),
                     "verification_results_file": artifact_paths.get("verification_results_file", ""),
                     "digest_output_file": artifact_paths.get("digest_output_file", ""),
+                    "cognitive_features": contract.cognitive_features,
+                },
+                "artifacts": [],
+                "fallback": {},
+            },
+            {
+                "step": "cognition",
+                "status": "ready" if contract.cognitive_features else "disabled",
+                "adapter": "built_in",
+                "execution_mode": "cognitive_layer",
+                "primary_inputs": {
+                    "items_file": artifact_paths.get("items_file", ""),
+                    "digest_output_file": artifact_paths.get("digest_output_file", ""),
+                    "features": contract.cognitive_features,
                 },
                 "artifacts": [],
                 "fallback": {},
@@ -1144,6 +1188,7 @@ def build_handoff_package(
                 "execution_mode": "acceptance_gate",
                 "primary_inputs": {
                     "digest_output_file": artifact_paths.get("digest_output_file", ""),
+                    "cognitive_features": contract.cognitive_features,
                 },
                 "artifacts": [],
                 "fallback": {},
@@ -1195,6 +1240,7 @@ def build_handoff_package(
             "format": contract.format,
             "audience": contract.audience,
             "mode": contract.mode,
+            "cognitive_features": contract.cognitive_features,
         },
         "adapter_inventory": contract.adapter_discovery.get("available_adapters", []),
         "artifact_paths": artifact_paths,
@@ -1360,6 +1406,9 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
                     render_argv.extend(
                         ["--verification-results-file", inputs["verification_results_file"]]
                     )
+                render_argv.extend(
+                    ["--cognitive-features", ",".join(inputs.get("cognitive_features", [])) or "off"]
+                )
             add_queue_item(
                 phase="render",
                 executor="built_in",
@@ -1372,15 +1421,31 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
                 produces_artifact="draft_briefing",
                 success_signal="digest is rendered with source and evidence fields",
             )
+        elif execution_mode == "cognitive_layer" and step.get("status") != "disabled":
+            inputs = step.get("primary_inputs", {})
+            add_queue_item(
+                phase="cognition",
+                executor="built_in",
+                action="run_cognitive_layer",
+                target=inputs.get("digest_output_file", "") or "draft-briefing.md",
+                payload=inputs,
+                requires_network=False,
+                consumes_artifact="draft_briefing",
+                produces_artifact="cognitive_draft",
+                success_signal="enabled cognitive features stay separated from verified news fields",
+            )
         elif execution_mode == "acceptance_gate":
+            acceptance_inputs = step.get("primary_inputs", {})
             add_queue_item(
                 phase="acceptance",
                 executor="built_in",
                 action="run_acceptance_gate",
-                target=step.get("primary_inputs", {}).get("digest_output_file", ""),
-                payload=step.get("primary_inputs", {}),
+                target=acceptance_inputs.get("digest_output_file", ""),
+                payload=acceptance_inputs,
                 requires_network=False,
-                consumes_artifact="draft_briefing",
+                consumes_artifact=(
+                    "cognitive_draft" if acceptance_inputs.get("cognitive_features") else "draft_briefing"
+                ),
                 produces_artifact="acceptance_report",
                 success_signal="no blocking evidence or structure issues remain",
             )
@@ -1541,6 +1606,8 @@ def cmd_execute(args: argparse.Namespace) -> int:
             artifact_paths["items_file"],
             "--verification-results-file",
             artifact_paths["verification_results_file"],
+            "--cognitive-features",
+            ",".join(contract.cognitive_features) or "off",
         ]
     payload = {
         "contract_summary": {
@@ -1548,6 +1615,7 @@ def cmd_execute(args: argparse.Namespace) -> int:
             "depth": contract.depth,
             "format": contract.format,
             "audience": contract.audience,
+            "cognitive_features": contract.cognitive_features,
         },
         "artifact_paths": artifact_paths,
         "handoff_package": handoff,
@@ -1806,6 +1874,22 @@ def prepare_items(contract: Contract, items: list[dict[str, Any]]) -> list[dict[
     return sorted(normalized, key=lambda item: item_rank_score(item, contract), reverse=True)
 
 
+def build_cognitive_review(contract: Contract, items: list[dict[str, Any]]) -> dict[str, Any]:
+    if "interrogate" not in contract.cognitive_features:
+        return {"enabled": False, "issues": []}
+
+    issues: list[str] = []
+    main_items, _ = split_items(items)
+    for item in main_items:
+        if item["bucket"] in {"政治与政策", "商业与市场", "专项关注"} and len(item["sources"]) < 2:
+            issues.append(f"single_source_high_impact:{item['item_id']}")
+        if item.get("causal_claim") and not item.get("causal_basis"):
+            issues.append(f"causal_claim_missing_basis:{item['item_id']}")
+        if item.get("counterevidence_checked") is False:
+            issues.append(f"counterevidence_not_checked:{item['item_id']}")
+    return {"enabled": True, "issues": list(dict.fromkeys(issues))}
+
+
 def build_acceptance_report(
     contract: Contract,
     items: list[dict[str, Any]],
@@ -1828,6 +1912,22 @@ def build_acceptance_report(
         warnings.append(f"retained_item_count_below_target:{len(main_items)}/{target}")
     if rendered and "来源：" not in rendered and main_items:
         blocking_issues.append("rendered_digest_missing_source_lines")
+    cognitive_review = build_cognitive_review(contract, normalized)
+    warnings.extend(cognitive_review["issues"])
+    if "sprout" in contract.cognitive_features and rendered and "认知延伸" in rendered:
+        rendered_lines = rendered.splitlines()
+        section_start = rendered_lines.index("认知延伸") + 1
+        extension_lines: list[str] = []
+        for line in rendered_lines[section_start:]:
+            if not line.strip():
+                break
+            if not line.startswith("- "):
+                break
+            extension_lines.append(line)
+        if not extension_lines or any(
+            "依据：" not in line or "性质：推断" not in line for line in extension_lines
+        ):
+            blocking_issues.append("cognitive_extension_missing_inference_label")
     return {
         "version": 1,
         "passed": not blocking_issues,
@@ -1835,6 +1935,7 @@ def build_acceptance_report(
         "warnings": list(dict.fromkeys(warnings)),
         "retained_count": len(main_items),
         "follow_up_count": len(follow_ups),
+        "cognitive_review": cognitive_review,
     }
 
 
@@ -2079,6 +2180,52 @@ def render_long_message_exec(contract: Contract, items: list[dict[str, Any]], fo
     return "\n".join(lines).rstrip() + "\n"
 
 
+def render_cognitive_sections(contract: Contract, items: list[dict[str, Any]]) -> str:
+    sections: list[str] = []
+
+    if "commentary" in contract.cognitive_features:
+        commentary = [
+            f"- {item['title']}：{str(item.get('signal_commentary', '')).strip()}"
+            for item in items
+            if item.get("signal_commentary") and str(item["signal_commentary"]).strip()
+        ]
+        if commentary:
+            sections.extend(["本期信号点评", *commentary[:3]])
+
+    if "sprout" in contract.cognitive_features:
+        extensions: list[str] = []
+        for item in items:
+            raw_extensions = item.get("insight_extensions", [])
+            if not isinstance(raw_extensions, list):
+                continue
+            for extension in raw_extensions:
+                if not isinstance(extension, dict):
+                    continue
+                insight = str(extension.get("insight", "")).strip()
+                basis = str(extension.get("basis", "")).strip()
+                if insight and basis:
+                    extensions.append(
+                        f"- {item['title']}：{insight}（依据：{basis}；性质：推断）"
+                    )
+        if extensions:
+            if sections:
+                sections.append("")
+            sections.extend(["认知延伸", *extensions[:3]])
+
+    if "continuity" in contract.cognitive_features:
+        continuity = [
+            f"- {item['title']}：{str(item.get('continuity', '')).strip()}"
+            for item in items
+            if item.get("continuity") and str(item["continuity"]).strip()
+        ]
+        if continuity:
+            if sections:
+                sections.append("")
+            sections.extend(["下期追踪", *continuity[:5]])
+
+    return "\n".join(sections).strip()
+
+
 def render_digest(contract: Contract, items: list[dict[str, Any]], item_limit: int | None = None) -> str:
     main_items, follow_ups = split_items(items)
     limited_items = main_items[: choose_item_limit(contract, item_limit)]
@@ -2091,6 +2238,9 @@ def render_digest(contract: Contract, items: list[dict[str, Any]], item_limit: i
     }
     renderer = renderers.get(contract.format, render_standard_digest)
     output = renderer(contract, limited_items, follow_ups)
+    cognitive_sections = render_cognitive_sections(contract, limited_items)
+    if cognitive_sections:
+        output = output.rstrip() + "\n\n" + cognitive_sections + "\n"
     if contract.inferred_assumptions:
         output = output.rstrip() + "\n\n推断假设\n"
         for assumption in contract.inferred_assumptions:
@@ -2196,6 +2346,10 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--format", choices=sorted(FORMAT_ALIASES))
         subparser.add_argument("--audience", choices=["personal", "executive", "research", "public"])
         subparser.add_argument("--mode", choices=["full", "standard", "minimal"])
+        subparser.add_argument(
+            "--cognitive-features",
+            help="Comma-separated: interrogate,sprout,commentary,continuity; use off to disable",
+        )
         subparser.add_argument("--specialty", default="")
         subparser.add_argument("--specialty-scope", default="")
         subparser.add_argument("--specialty-keywords", default="")

@@ -134,7 +134,7 @@ class RunnerHardeningTests(unittest.TestCase):
 
         self.assertEqual(
             phases,
-            ["collect", "normalize", "rank", "verify", "render", "acceptance", "polish"],
+            ["collect", "normalize", "rank", "verify", "render", "cognition", "acceptance", "polish"],
         )
         produced = {item.get("produces_artifact") for item in queue}
         consumed = {item.get("consumes_artifact") for item in queue}
@@ -269,6 +269,102 @@ class RunnerHardeningTests(unittest.TestCase):
 
         self.assertFalse(report["passed"])
         self.assertTrue(report["blocking_issues"])
+
+    def test_cognitive_features_are_configurable_and_validated(self) -> None:
+        parser = runner.build_parser()
+        default_contract = runner.build_contract(parser.parse_args(["contract"]))
+        off_contract = runner.build_contract(
+            parser.parse_args(["contract", "--cognitive-features", "off"])
+        )
+
+        self.assertEqual(default_contract.cognitive_features, ["interrogate"])
+        self.assertEqual(off_contract.cognitive_features, [])
+        with self.assertRaisesRegex(ValueError, "invalid cognitive features"):
+            runner.build_contract(
+                parser.parse_args(["contract", "--cognitive-features", "interrogate,guess"])
+            )
+
+    def test_sprout_rendering_requires_basis_and_labels_inference(self) -> None:
+        item = {
+            "title": "Policy update",
+            "what": "A regulator published a rule.",
+            "why": "The rule changes procurement requirements.",
+            "bucket": "政治与政策",
+            "source_level": "首选证据",
+            "evidence_status": "已确认",
+            "sources": ["official rule", "direct report"],
+            "insight_extensions": [
+                {"insight": "Suppliers may adjust qualification plans", "basis": "new procurement threshold"},
+                {"insight": "This incomplete extension must not render"},
+            ],
+        }
+
+        output = runner.render_digest(
+            runner.Contract(cognitive_features=["interrogate", "sprout"]),
+            [item],
+        )
+
+        self.assertIn("认知延伸", output)
+        self.assertIn("依据：new procurement threshold；性质：推断", output)
+        self.assertNotIn("incomplete extension", output)
+
+    def test_acceptance_blocks_unlabeled_visible_extension(self) -> None:
+        item = {
+            "title": "Policy update",
+            "what": "A regulator published a rule.",
+            "why": "The rule changes procurement requirements.",
+            "bucket": "政治与政策",
+            "source_level": "首选证据",
+            "evidence_status": "已确认",
+            "sources": ["official rule", "direct report"],
+        }
+        rendered = "来源：official rule\n\n认知延伸\n- Policy update：可能改变采购节奏\n"
+
+        report = runner.build_acceptance_report(
+            runner.Contract(cognitive_features=["sprout"]),
+            [item],
+            rendered,
+        )
+
+        self.assertFalse(report["passed"])
+        self.assertIn("cognitive_extension_missing_inference_label", report["blocking_issues"])
+
+    def test_off_disables_cognition_queue_stage(self) -> None:
+        contract = runner.Contract(cognitive_features=[])
+        handoff = runner.build_handoff_package(
+            contract,
+            runner.build_collect_execution_plan(contract),
+            runner.build_verify_execution_plan(contract, []),
+            runner.build_polish_execution_plan(contract),
+            runner.build_artifact_paths(),
+        )
+
+        queue = runner.build_execute_queue(handoff)["queue"]
+        phases = [item["phase"] for item in queue]
+        acceptance = next(item for item in queue if item["phase"] == "acceptance")
+
+        self.assertNotIn("cognition", phases)
+        self.assertEqual(acceptance["consumes_artifact"], "draft_briefing")
+
+    def test_interrogate_review_warns_on_single_source_high_impact_item(self) -> None:
+        report = runner.build_acceptance_report(
+            runner.Contract(cognitive_features=["interrogate"]),
+            [
+                {
+                    "title": "Market event",
+                    "what": "A company changed guidance.",
+                    "why": "The change may affect pricing.",
+                    "bucket": "商业与市场",
+                    "source_level": "首选证据",
+                    "evidence_status": "已确认",
+                    "sources": ["company filing"],
+                }
+            ],
+        )
+
+        self.assertTrue(report["passed"])
+        self.assertTrue(report["cognitive_review"]["enabled"])
+        self.assertTrue(any(issue.startswith("single_source_high_impact:") for issue in report["warnings"]))
 
 
 if __name__ == "__main__":

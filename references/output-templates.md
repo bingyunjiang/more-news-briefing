@@ -32,6 +32,23 @@ Use `线索待证` instead of `仅作线索` inside the final digest to keep the
 
 If an item is labeled `线索待证` or `待确认`, it should usually move to `继续跟踪` instead of staying in the main ranked block.
 
+## Optional cognitive sections
+
+Render these only when enabled by `cognitive_features` and supported by structured item fields:
+
+```md
+## 本期信号点评
+- [事件]：[跨条目的编辑判断]
+
+## 认知延伸
+- [事件]：[连接或情景]（依据：[可核查依据]；性质：推断）
+
+## 下期追踪
+- [事件]：[下个周期要核对的指标、实体或问题]
+```
+
+Keep `interrogate` non-visible by default. It belongs in acceptance warnings unless the user asks to see the challenge questions.
+
 ## Template 1: Short briefing
 
 Use for fast reading, chat delivery, or a compact daily skim.

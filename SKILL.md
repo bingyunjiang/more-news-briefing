@@ -1,6 +1,6 @@
 ---
 name: more-news-briefing
-description: Create recurring multi-topic news briefings with customizable cadence, topic mix, ranking, verification, and source-backed summaries. Use when Codex needs to collect, deduplicate, rank, verify, summarize, and prepare daily, weekly, or custom-cycle digests across general news, AI, politics, business, culture, sports, and user-defined subjects. Default to full mode, which runs the complete collect-sort-verify-write workflow. On a user's first use, resolve the topic contract before search begins, and explicitly help the user choose broad themes or define specialty topics with enough scope, keywords, geography, and watch priorities to support repeatable monitoring. This skill should work as a standalone workflow by default, and only treat other installed skills as optional enhancements.
+description: Create recurring multi-topic news briefings with customizable cadence, topic mix, ranking, verification, source-backed summaries, and optional claim interrogation, insight extension, signal commentary, and cross-run tracking. Use when Codex needs to collect, deduplicate, rank, verify, summarize, or prepare daily, weekly, or custom-cycle digests across general news, AI, politics, business, culture, sports, and user-defined subjects, including requests for deeper interpretation after the news. Default to full mode, which runs the complete collect-sort-verify-write workflow. On a user's first use, resolve the topic contract before search begins, and explicitly help the user choose broad themes or define specialty topics with enough scope, keywords, geography, and watch priorities to support repeatable monitoring. This skill should work as a standalone workflow by default, and only treat other installed skills as optional enhancements.
 ---
 
 # More News Briefing
@@ -104,7 +104,7 @@ Treat the following as part of the skill's owned core, not borrowed behavior:
 
 If local code support is useful, use the built-in runner documented in [local-runner.md](./references/local-runner.md).
 
-Treat the runner as an artifact-driven execution contract. Its complete phase order is `collect -> normalize/deduplicate -> rank/retain -> verify -> render -> acceptance -> polish`; do not skip the acceptance gate or execute generated command strings through a shell.
+Treat the runner as an artifact-driven execution contract. Its complete phase order is `collect -> normalize/deduplicate -> rank/retain -> verify -> render -> cognition -> acceptance -> polish`; do not skip the acceptance gate or execute generated command strings through a shell.
 
 When external skills are unavailable, use this standalone route:
 
@@ -123,14 +123,16 @@ When the preferred retrieval route is `anysearch`, read [anysearch-adapter-runbo
 
 ## Internal Enhancement Patterns
 
-This skill internally adopts four enhancement patterns. Use them whether or not the original source skills are installed:
+This skill internally adopts five enhancement patterns. Use them whether or not the original source skills are installed:
 
 1. `recent-scan pattern`: start with a short-horizon sweep for the last 24 hours to 7 days and identify what is actually new
 2. `broad-search pattern`: widen coverage with multiple keyword variants, domain mixes, and topic buckets before ranking
 3. `deep-verify pattern`: give high-impact or ambiguous items a second pass with fuller reading and cross-checking
 4. `final-polish pattern`: compress, de-slop, and humanize the prose after the factual structure is stable
+5. `cognitive-layer pattern`: optionally interrogate the draft, extend verified signals, and prepare next-cycle tracking without mixing inference into reported facts
 
 Read [embedded-enhancements.md](./references/embedded-enhancements.md) before difficult collection or synthesis tasks.
+Read [cognitive-enhancements.md](./references/cognitive-enhancements.md) when enabling any cognitive feature beyond the default `interrogate` review.
 
 ## External Skill Bridges
 
@@ -190,6 +192,7 @@ Lock down the core contract variables before collecting:
 5. Mode: `full`, `standard`, or `minimal`
 6. Source-role preference: discovery, verification, context, and watch balance when recurring monitoring matters
 7. Watchlists: company, institution, and community watchlists when recurring monitoring matters
+8. Cognitive features: default `interrogate`, or a user-selected subset of `interrogate`, `sprout`, `commentary`, and `continuity`
 
 If one or more variables are missing, make the smallest reasonable assumption and state it in the final output.
 
@@ -249,6 +252,8 @@ For each retained item, include:
 4. A timestamp or time window when relevant
 5. One or more sources if the user asked for links or attribution
 
+After the evidence-backed digest is stable, apply the configured cognitive layer. Keep `interrogate` as a non-visible review gate by default. Render `commentary`, `sprout`, or `continuity` only when enabled and supported by structured item fields. Label every visible extension as inference and state its basis.
+
 Avoid filler transitions, generic optimism, and repetitive framing.
 
 ### 5. Prepare for push or repeat runs
@@ -265,6 +270,7 @@ Store the workflow assumptions in the automation:
 4. Delivery channel
 5. Maximum item count
 6. Whether links, source notes, or a "watch next" section should be included
+7. Enabled cognitive features and any prior-run continuity input
 
 ## Output Modes
 
@@ -423,5 +429,7 @@ Before finishing, check that the digest:
 4. Reads like a briefing, not search notes
 5. Uses source strength labels consistently when the digest is source-backed
 6. Can be reused by an external scheduler or automation layer without manual restructuring
+7. Keeps reported facts, editorial synthesis, and inferred extensions visibly separate
+8. Labels each visible cognitive extension with its basis and inference status
 
 Read [acceptance-checklist.md](./references/acceptance-checklist.md) before delivering the final answer when you want a pass/fail check rather than a loose quality scan.

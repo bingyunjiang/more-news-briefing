@@ -68,13 +68,20 @@ Apply this after ranking is stable:
 
 If the prose starts sounding like stitched search notes, rewrite for rhythm and clarity, but do not remove supporting attribution.
 
-## 5. Mapping to optional external skills
+## 5. Cognitive-layer pattern
+
+Purpose: turn a verified digest into a better thinking aid without weakening the evidence boundary.
+
+Use `interrogate` by default as a quiet review gate. Enable `sprout`, `commentary`, or `continuity` only when requested or configured. Keep visible extensions separate from news items, name their basis, and label them as inference. Read [cognitive-enhancements.md](./cognitive-enhancements.md) for the field contract and checks.
+
+## 6. Mapping to optional external skills
 
 If the environment includes related skills, map them like this:
 
-1. `Last30Days` maps to the `recent-scan pattern`
-2. `anysearch` maps to the `broad-search pattern`
-3. `deep-research` maps to the `deep-verify pattern`
-4. `humanizer-zh` maps to the `final-polish pattern`
+1. `anysearch` maps to the `broad-search pattern`
+2. `deep-research` maps to the `deep-verify pattern`
+3. `humanizer-zh` maps to the `final-polish pattern`
 
 These are accelerators, not mandatory dependencies.
+
+Do not map `Last30Days` to news recency; it tracks developer activity rather than current affairs.

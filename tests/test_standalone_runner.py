@@ -78,6 +78,8 @@ class StandaloneRunnerTests(unittest.TestCase):
                 "research",
                 "--mode",
                 "full",
+                "--cognitive-features",
+                "interrogate,sprout,commentary,continuity",
                 "--specialty",
                 "BESS",
                 "--specialty-scope",
@@ -260,7 +262,15 @@ class StandaloneRunnerTests(unittest.TestCase):
             self.assertIn("一次刷尽近期热点", expected_output.read_text(encoding="utf-8"))
 
     def test_execute_verify_tasks_expose_merge_command_hint(self) -> None:
-        payload, _ = run_runner("execute", "--items-file", str(ITEMS_FILE), "--depth", "analyst")
+        payload, _ = run_runner(
+            "execute",
+            "--items-file",
+            str(ITEMS_FILE),
+            "--depth",
+            "analyst",
+            "--cognitive-features",
+            "interrogate,sprout",
+        )
         verify_items = [item for item in payload["execute_queue"]["queue"] if item["phase"] == "verify"]
         self.assertEqual(len(verify_items), 2)
         for item in verify_items:
@@ -268,6 +278,9 @@ class StandaloneRunnerTests(unittest.TestCase):
             self.assertIn("verify-results", item["merge_command_hint"])
             self.assertIn("--merge", item["merge_command_hint"])
             self.assertTrue(item["result_stub_file"].endswith(".json"))
+        self.assertEqual(payload["contract_summary"]["cognitive_features"], ["interrogate", "sprout"])
+        self.assertIn("--cognitive-features", payload["digest_command_argv"])
+        self.assertIn("interrogate,sprout", payload["digest_command_argv"])
 
     def test_verify_builtin_route_is_standardized(self) -> None:
         payload, _ = run_runner("verify", "--items-file", str(ITEMS_FILE), "--mode", "standard")

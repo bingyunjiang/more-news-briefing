@@ -3,7 +3,7 @@
 一次刷尽近期热点，高效工作一整天  
 Scan the day in one pass, from headlines to chatter
 
-[![Version](https://img.shields.io/badge/version-v0.1.4-2f6feb)](#release-notes)
+[![Version](https://img.shields.io/badge/version-v0.1.5-2f6feb)](#release-notes)
 [![License](https://img.shields.io/badge/license-MIT-1f883d)](./LICENSE)
 [![Type](https://img.shields.io/badge/type-AI%20Agent%20Skill-8250df)](#项目表头)
 [![Language](https://img.shields.io/badge/language-ZH%20%7C%20EN-f59e0b)](#中文说明)
@@ -17,7 +17,7 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 | 字段 | 内容 |
 |---|---|
 | 名称 | `more-news-briefing` |
-| 版本 | `v0.1.4` |
+| 版本 | `v0.1.5` |
 | 类型 | AI Agent Skill / 新闻简报技能 |
 | 场景 | 新闻简报 / 日报周报 / 研究跟踪 / 长消息汇总 |
 | 关键词 | `news briefing`, `digest`, `AI`, `policy`, `business`, `WeChat`, `Feishu`, `新闻简报`, `日报`, `周报`, `研究跟踪` |
@@ -57,22 +57,34 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 ### 功能概览
 
-- 信息来源更广：不是单一新闻源抓取，而是按“综合媒体 + 垂直媒体 + 官方/一手来源”三层混合取材，更适合做跨主题简报
-- 更适合多主题合并：同一轮里可以同时覆盖 AI、政策、商业、文化、体育和用户专项主题，并在输出前统一去重、排序、压缩
-- 对高价值信息更友好：当政策、公司公告、平台更新、监管变化这类事件出现时，会优先保留高影响条目，而不是被流量型热点挤掉
-- 完全独立可用：这个 skill 自己就能走通“收集-筛选-验证-输出”链路，不依赖其它 skill、插件或外部编排
-- 主流程完整内聚：检索扩展、候选合并、优先级排序、事实压缩和最终成稿都在同一套工作流里完成
-- 更适合交付而不是试验：内置输入契约、输出模板、验收清单和运行 runbook，适合直接产出日报、周报、研究跟踪或微信/飞书长消息版简报
+`more-news-briefing` 不只是把新闻压缩成几段话，而是把一次简报拆成可重复执行的工作流：先确认主题和交付口径，再收集候选信息，合并重复事件，按影响力排序，做证据检查，最后输出适合阅读和转发的 Markdown 简报。
+
+它适合三类常见任务：
+
+- 今日/本周快报：按默认主题快速整理 AI、政策、商业、文化、体育等近期重点
+- 多主题工作简报：把不同领域的信息统一排序，避免每个主题各写一堆互不相干的摘要
+- 专题长期跟踪：围绕某个行业、公司、技术、政策或市场建立稳定 watchlist，后续每次按同一口径更新
+
+核心能力包括：
+
+- 合同先行：把主题、地域、优先级、输出格式、是否持续跟踪等要求收进同一个输入契约
+- 多源收集：支持综合媒体、垂直媒体、官方来源、社区和开放数据源的组合取材
+- 去重排序：同一事件跨来源合并，只保留一个主条目，并按影响、时效、关注度、相关性和新意排序
+- 证据分层：高影响内容优先交叉验证，证据不足的条目进入“继续跟踪”，不硬塞进正式正文
+- 可交付输出：内置短简报、标准日报、分析观察、来源标注、微信/飞书长消息等模板
+- 可选认知层：在事实简报稳定后，可配置批判检查、洞察拓展、信号评论和下期跟踪，但推断必须与事实分开标注
+- 独立可运行：本仓库自带 runner、输入契约、输出模板和验收清单，外部 skill 只是可选增强器
 
 ### 基于实现的功能亮点
 
-- 首次使用更不容易被跳过自定义：入口先收口成 `直接开始 / 快速自定义 / 深度自定义` 三段式。想低摩擦开始可以直接跑，愿意个性化时再继续补主题、专项方向、地域和关注重点，减少第一次使用时“默认直接跑掉”的情况
-- 默认主题开箱即用：如果用户只说“做个今日简报”，实现会自动落到 `AI与科技 / 政治与政策 / 商业与市场 / 文化与社会 / 体育` 这组预定义主题；一旦补充专项主题，会自动把“专项关注”并入同一份简报
-- 专项监测更像行业 watch，而不是临时搜词：除了收集关键词，还支持 geography、priority 以及公司/机构/社区 watchlist，适合储能、充电桩、V2G、快充、无线充电、超级电容这类长期跟踪主题
-- 简讯模板不是单一版式：仓库里已经预置 `Short Brief`、`Standard Digest`、`Analyst Watch`、`Source-attributed`、`WeChat / Feishu long message`、`信息密度高版`、`领导速览版` 等模板，能按阅读场景直接出稿
-- 天然适合飞书/微信推送：现在默认要求最终成稿使用 Markdown 输出，并限制为适合聊天工具粘贴的轻量格式。长消息模板已经按聊天界面做了标题、段落密度、分主题速览和“继续跟踪”收口，既能做高信息密度版，也能做领导速览版，减少二次手工改写
-- 可自定义后续推送与自动化：当任务包含持续投递时，skill 约定可以把最终稳定结构交给 `automation-workflows`，继续衔接定时发送、频道分发或重复执行，不需要每次重配整套流程
-- 弱证据不会硬塞进正文：验证后可以把条目保留、降级或移到“继续跟踪”，这样正式简报和观察项天然分层，更适合研究汇报和团队同步
+- 首次使用有低摩擦入口：`直接开始 / 快速自定义 / 深度自定义` 三段式入口让用户可以先跑默认简报，也可以快速补主题、专项方向、地域和关注重点
+- 默认主题开箱即用：用户只说“做个今日简报”时，会自动使用 `AI与科技 / 政治与政策 / 商业与市场 / 文化与社会 / 体育` 的默认组合
+- 专项监测可长期复用：专项主题支持关键词、别名、地域、优先级、排除项、公司/机构/社区观察名单，适合行业和研究跟踪
+- 本地 runner 有完整产物链：`collect -> normalize/deduplicate -> rank/retain -> verify -> render -> cognition -> acceptance -> polish` 每一步都有明确输入输出
+- 验收不是形式步骤：机器可读验收报告会标出缺失证据、未知验证结论、单来源高影响条目、无依据因果判断和未检查反证等风险
+- 认知增强可按需开启：默认只做不展示的 `interrogate` 审稿检查；`sprout`、`commentary`、`continuity` 只有在用户请求或配置后才输出
+- 推断有明确边界：可见洞察必须说明依据和推断性质，事件事实、重要性判断、拓展洞察和下期跟踪不会混成一段
+- 面向公开发布：没有隐藏用户状态或私有服务依赖，用户可以按自己的来源、模板、watchlist 和自动化环境自定义
 
 ### 为什么是这个 Skill
 
@@ -167,6 +179,20 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 ## 版本说明
 
+### v0.1.5
+
+- 新增可配置的认知增强层 `cognitive_features`，支持 `interrogate`、`sprout`、`commentary`、`continuity` 和 `off`，默认仅启用非可见的 `interrogate` 审稿门，保持普通简报紧凑
+- 主流程扩展为 `collect -> normalize/deduplicate -> rank/retain -> verify -> render -> cognition -> acceptance -> polish`，把认知层放在事实渲染之后、验收之前
+- 新增 `references/cognitive-enhancements.md`，明确认知增强的配置、证据边界、批判检查、洞察筛选、信号评论和连续跟踪规则
+- 输入契约、输出模板、验收清单、编辑评分规则、内置增强说明、本地 runner 文档和 `agents/openai.yaml` 均已接入 `cognitive_features`
+- 新增可选结构化字段：`signal_commentary`、`insight_extensions`、`continuity`、`causal_claim`、`causal_basis`、`counterevidence_checked`
+- 可见的 `sprout` 拓展必须同时标注 `依据` 与 `性质：推断`，避免把洞察、类比或预判混写成已验证事实
+- `interrogate` 会检查单来源高影响条目、无依据因果判断、未检查反证等问题，并将风险写入机器可读验收警告
+- `continuity` 只接受来自上期简报、调用方输入、watchlist 文件或外部自动化的状态，不引入隐藏的全局用户画像，方便公开发布和用户自定义
+- 本地 runner、CLI、执行队列和渲染命令完成配置透传，并补充认知特性、验收警告和运行安全相关回归测试
+- 修正 `Last30Days` 的说明边界：它是开发活动回顾 skill，不用于当前新闻检索
+- 发布版本定义为 `v0.1.5`，同时将 UI/agent 元数据版本校准到 `0.1.5`
+
 ### v0.1.4
 
 - 新增 `references/borrowed-source-catalog.md`，将新闻来源整理为可直接选用的网站、Feed、API、社区和观察名单目录
@@ -240,22 +266,34 @@ On first use, the skill now starts with a very short gate: `direct default run /
 
 ### What It Does
 
-- Broader source coverage: it uses a blended source model of general outlets, vertical publications, and official or primary sources instead of relying on a single feed
-- Stronger multi-topic synthesis: it can merge AI, policy, business, culture, sports, and user-priority specialty topics into one ranked digest
-- Better handling of high-impact signals: policy shifts, company announcements, platform updates, and regulatory moves are intended to outrank low-value noise
-- Fully self-contained: it completes the collect-filter-verify-format loop on its own, without relying on companion skills, plugins, or external orchestration
-- Tighter workflow ownership: search expansion, candidate merging, prioritization, factual compression, and final briefing output all live inside one cohesive workflow
-- Built for delivery, not just exploration: it includes an input contract, output templates, acceptance checks, and runbooks so the result is ready for reporting or chat-based delivery
+`more-news-briefing` is more than a summarization prompt. It turns a briefing request into a repeatable workflow: resolve the topic and delivery contract, collect candidates, merge duplicate events, rank by importance, check evidence, and render a Markdown digest that is ready to read, forward, or archive.
+
+It is built for three common jobs:
+
+- daily or weekly briefs across the default mix of AI, policy, business, culture, and sports
+- multi-topic work briefings where unrelated subject areas need one shared priority order
+- recurring specialty monitoring for an industry, company set, technology, policy track, or market segment
+
+Core capabilities include:
+
+- Contract-first setup: captures topics, geography, priority lens, output format, and continuity needs in one reusable input contract
+- Multi-source collection: combines general outlets, vertical publications, official sources, communities, feeds, and open data routes
+- Deduplication and ranking: merges the same event across sources and ranks retained items by consequence, recency, attention, relevance, and novelty
+- Evidence tiers: cross-checks high-impact items and moves weak or unresolved claims into follow-up instead of overstating them
+- Delivery-ready formats: includes short briefs, standard digests, analyst watch formats, source-attributed views, and WeChat / Feishu long-message templates
+- Optional cognitive layer: after the factual digest is stable, users can enable critical review, insight extension, signal commentary, or next-cycle tracking
+- Standalone operation: ships with its own runner, input contract, templates, and acceptance checklist; companion skills remain optional accelerators
 
 ### Implementation-Backed Highlights
 
-- First-use setup is less likely to skip customization by accident: the onboarding flow now starts with a compact three-path gate for direct default run, quick customization, or deep customization before expanding into the full topic form
-- Default topics work out of the box: if the user simply asks for a digest, the implementation falls back to a predefined mix of `AI and technology`, `politics and policy`, `business and markets`, `culture and society`, and `sports`; a specialty topic is then appended into the same briefing when needed
-- Specialty monitoring behaves more like an industry watchlist than a one-off search: the contract supports specialty keywords, geography, priority lenses, and company / institution / community watchlists for repeatable tracking
-- Output is template-rich, not one-size-fits-all: the repository already includes `Short Brief`, `Standard Digest`, `Analyst Watch`, source-attributed formats, WeChat / Feishu long-message layouts, a high-density variant, and an executive-skim variant
-- Chat delivery is a first-class scenario: final output now defaults to Markdown, using lightweight structure that pastes cleanly into WeChat and Feishu while keeping the long-message layouts readable
-- Ongoing push workflows can be customized: when the job includes repeated delivery, the skill is designed to hand off its stable digest structure to `automation-workflows` for scheduling and downstream channel delivery
-- Weak evidence is handled visibly: verification can keep, downgrade, or move items into a follow-up watch section so the main digest stays cleaner for actual reporting
+- First use has a low-friction entry point: the compact gate supports direct default run, quick customization, or deep customization
+- Default topics work out of the box: a short request falls back to `AI and technology`, `politics and policy`, `business and markets`, `culture and society`, and `sports`
+- Specialty monitoring is reusable: watch topics can carry keywords, aliases, geography, priority lenses, exclusions, and company / institution / community watchlists
+- The local runner has a full artifact chain: `collect -> normalize/deduplicate -> rank/retain -> verify -> render -> cognition -> acceptance -> polish`
+- Acceptance is operational: machine-readable reports can flag missing evidence, unknown verification, single-source high-impact items, unsupported causal claims, and unchecked counterevidence
+- Cognitive features are opt-in beyond review: `interrogate` runs quietly by default, while `sprout`, `commentary`, and `continuity` render only when requested or configured
+- Inference stays separated: visible extensions must name their basis and inference status instead of blending forecast or interpretation into reported facts
+- Public-release friendly: no hidden user state or private service dependency is required; users can customize sources, templates, watchlists, and automation
 
 ### Why This Skill
 
@@ -339,6 +377,20 @@ Default delivery format:
 - complex HTML-style formatting should be avoided for chat delivery
 
 ## Release Notes
+
+### v0.1.5
+
+- Added configurable `cognitive_features` with `interrogate`, `sprout`, `commentary`, `continuity`, and `off`; the default keeps only the quiet `interrogate` review gate enabled so ordinary briefs stay compact
+- Extended the workflow to `collect -> normalize/deduplicate -> rank/retain -> verify -> render -> cognition -> acceptance -> polish`, placing cognition after factual rendering and before acceptance
+- Added `references/cognitive-enhancements.md` to document configuration, evidence boundaries, critical checks, insight-extension selection, signal commentary, and continuity behavior
+- Wired `cognitive_features` through the input contract, output templates, acceptance checklist, editorial rubric, embedded enhancements, local runner docs, and `agents/openai.yaml`
+- Added optional structured fields: `signal_commentary`, `insight_extensions`, `continuity`, `causal_claim`, `causal_basis`, and `counterevidence_checked`
+- Required visible `sprout` extensions to include both a basis and an explicit inference label, keeping insight, analogy, and forecast separate from verified facts
+- Added `interrogate` warnings for single-source high-impact items, causal claims without basis, and explicitly unchecked counterevidence
+- Kept `continuity` portable by requiring state from prior digests, caller input, watchlist files, or external automation instead of hidden global user state
+- Propagated cognitive configuration through the local runner, CLI, execution queue, and render commands, with regression coverage for cognitive features, acceptance warnings, and safe execution behavior
+- Corrected the `Last30Days` boundary: it is a developer-activity review skill, not a current-affairs retrieval source
+- Defined the public release as `v0.1.5` and aligned UI/agent metadata to `0.1.5`
 
 ### v0.1.4
 

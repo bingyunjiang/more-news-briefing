@@ -44,6 +44,16 @@ Pass only if:
 3. `为什么重要` is shorter than or equal in weight to `发生了什么`
 4. The text reads like a briefing, not search notes
 
+## Cognitive layer
+
+Pass only if:
+
+1. `interrogate` flags single-source high-impact claims, unsupported causality, and unchecked counterevidence
+2. `sprout` uses only retained, evidence-backed items
+3. Every visible extension states `依据` and `性质：推断`
+4. Editorial commentary and future tracking are not presented as reported facts
+5. Disabling cognitive features leaves the core digest unchanged
+
 ## Reusability
 
 Pass only if:
@@ -57,4 +67,4 @@ Pass only if:
 
 ## Machine report
 
-`finalize` emits `acceptance_report` with `passed`, `blocking_issues`, `warnings`, retained count, and follow-up count. Blocking issues prevent the Markdown artifact from being written; count shortfalls and high-impact evidence gaps remain visible warnings for operator review.
+`finalize` emits `acceptance_report` with `passed`, `blocking_issues`, `warnings`, retained count, follow-up count, and `cognitive_review`. Blocking issues prevent the Markdown artifact from being written; count shortfalls, high-impact evidence gaps, and interrogation findings remain visible warnings for operator review.
