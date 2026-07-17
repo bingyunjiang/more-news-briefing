@@ -72,7 +72,7 @@ If the prose starts sounding like stitched search notes, rewrite for rhythm and 
 
 Purpose: turn a verified digest into a better thinking aid without weakening the evidence boundary.
 
-Use `interrogate` by default as a quiet review gate. Enable `sprout`, `commentary`, or `continuity` only when requested or configured. Keep visible extensions separate from news items, name their basis, and label them as inference. Read [cognitive-enhancements.md](./cognitive-enhancements.md) for the field contract and checks.
+Use `interrogate` by default as a quiet review gate. Use profiles when helpful: `compact` for review-only, `insight` for review plus visible insight, `analyst` for insight plus continuity, `all` for demos and full cognitive previews, and `off` for summary-only output. Enable `sprout`, `commentary`, or `continuity` only when requested or configured. Keep visible extensions separate from news items, name their basis, and label them as inference. If continuity should feed the next cycle, write it as an explicit artifact rather than hidden memory. Read [cognitive-enhancements.md](./cognitive-enhancements.md) for the field contract and checks.
 
 ## 6. Mapping to optional external skills
 

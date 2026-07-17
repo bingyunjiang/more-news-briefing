@@ -192,7 +192,7 @@ Lock down the core contract variables before collecting:
 5. Mode: `full`, `standard`, or `minimal`
 6. Source-role preference: discovery, verification, context, and watch balance when recurring monitoring matters
 7. Watchlists: company, institution, and community watchlists when recurring monitoring matters
-8. Cognitive features: default `interrogate`; use `all` for `interrogate,sprout,commentary,continuity`; or a user-selected subset
+8. Cognitive features: default `compact`/`interrogate`; use `insight`, `analyst`, `all`, `off`, or a user-selected subset
 
 If one or more variables are missing, make the smallest reasonable assumption and state it in the final output.
 
@@ -256,6 +256,7 @@ After the evidence-backed digest is stable, apply the configured cognitive layer
 
 If the user explicitly asks to test, demo, preview, or see the cognitive features in action, enable `interrogate,sprout,commentary,continuity` instead of using only the default `interrogate`.
 
+For local smoke tests, use `python3 scripts/standalone_runner.py demo --cognitive-features all` so the visible cognitive sections are exercised. When continuity should feed the next run, write it to an explicit file with `--continuity-file`; do not rely on hidden memory.
 
 Avoid filler transitions, generic optimism, and repetitive framing.
 

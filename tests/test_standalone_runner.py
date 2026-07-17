@@ -56,6 +56,8 @@ class StandaloneRunnerTests(unittest.TestCase):
             prepared_file = tmpdir_path / "prepared.json"
             verification_output = tmpdir_path / "shared.verification-results.json"
             final_output = tmpdir_path / "final.md"
+            demo_output = tmpdir_path / "demo.md"
+            demo_continuity = tmpdir_path / "demo.continuity.json"
             draft_file = tmpdir_path / "draft.md"
             items_file.write_text(ITEMS_FILE.read_text(encoding="utf-8"), encoding="utf-8")
             results_file.write_text(
@@ -170,6 +172,13 @@ class StandaloneRunnerTests(unittest.TestCase):
                     "--output-file",
                     str(final_output),
                 ),
+                (
+                    "demo",
+                    "--output-file",
+                    str(demo_output),
+                    "--continuity-file",
+                    str(demo_continuity),
+                ),
             ]
 
             for command in json_commands:
@@ -195,6 +204,8 @@ class StandaloneRunnerTests(unittest.TestCase):
             self.assertTrue(prepared_file.exists())
             self.assertTrue(verification_output.exists())
             self.assertTrue(final_output.exists())
+            self.assertTrue(demo_output.exists())
+            self.assertTrue(demo_continuity.exists())
 
     def test_prepare_writes_normalized_ranked_items(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -248,18 +259,26 @@ class StandaloneRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
             items_file = tmpdir_path / "items.json"
+            continuity_file = tmpdir_path / "continuity.json"
             items_file.write_text(ITEMS_FILE.read_text(encoding="utf-8"), encoding="utf-8")
 
             finalize_payload, _ = run_runner(
                 "finalize",
                 "--items-file",
                 str(items_file),
+                "--continuity-file",
+                str(continuity_file),
             )
 
             expected_output = tmpdir_path / f"daily-news-{date.today().isoformat()}.md"
             self.assertEqual(finalize_payload["written_to"], str(expected_output))
             self.assertTrue(expected_output.exists())
             self.assertIn("一次刷尽近期热点", expected_output.read_text(encoding="utf-8"))
+            self.assertEqual(finalize_payload["continuity_file"], str(continuity_file))
+            self.assertTrue(continuity_file.exists())
+            continuity = json.loads(continuity_file.read_text(encoding="utf-8"))
+            self.assertEqual(continuity["state_boundary"], "portable_explicit_file_no_hidden_memory")
+            self.assertIn("acceptance_summary", finalize_payload)
 
     def test_execute_verify_tasks_expose_merge_command_hint(self) -> None:
         payload, _ = run_runner(
@@ -339,6 +358,33 @@ class StandaloneRunnerTests(unittest.TestCase):
             self.assertIn("BLS发布6月就业报告", digest_text)
             self.assertIn("继续跟踪", digest_text)
             self.assertIn("G7发布地缘政治声明", digest_text)
+
+    def test_demo_renders_visible_cognitive_sections_and_continuity_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            output_file = tmpdir_path / "demo.md"
+            continuity_file = tmpdir_path / "continuity.json"
+
+            payload, _ = run_runner(
+                "demo",
+                "--output-file",
+                str(output_file),
+                "--continuity-file",
+                str(continuity_file),
+            )
+
+            self.assertEqual(
+                payload["contract"]["cognitive_features"],
+                ["interrogate", "sprout", "commentary", "continuity"],
+            )
+            rendered = output_file.read_text(encoding="utf-8")
+            self.assertIn("本期信号点评", rendered)
+            self.assertIn("认知延伸", rendered)
+            self.assertIn("下期追踪", rendered)
+            self.assertIn("性质：推断", rendered)
+            continuity = json.loads(continuity_file.read_text(encoding="utf-8"))
+            self.assertEqual(continuity["state_boundary"], "portable_explicit_file_no_hidden_memory")
+            self.assertGreaterEqual(len(continuity["items"]), 1)
 
 
 if __name__ == "__main__":

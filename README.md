@@ -99,7 +99,9 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 - 在调用时指定 `cognitive_features=interrogate,sprout,commentary,continuity`
 - 或使用快捷别名 `cognitive_features=all`（等价于开启全部可见认知层）
+- 或使用预设：`compact`（默认审稿）、`insight`（洞察版）、`analyst`（研究跟踪版）、`off`（纯摘要）
 - 对 runner 命令使用 `--cognitive-features all`
+- 用 `python3 scripts/standalone_runner.py demo --cognitive-features all` 直接查看可见认知层样例
 - 如果智能体检测到你的请求包含“测试”、“演示”、“展示认知增强”等意图，会自动启用全认知层
 
 所有可见洞察均标注 `依据` 和 `性质：推断`，不会把推测写成事实。
@@ -194,6 +196,11 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 ### v0.1.5
 
 - 新增可配置的认知增强层 `cognitive_features`，支持 `interrogate`、`sprout`、`commentary`、`continuity` 和 `off`，默认仅启用非可见的 `interrogate` 审稿门，保持普通简报紧凑
+- 新增 `compact`、`insight`、`analyst`、`all` 认知预设，并增加 runner `demo` 命令，可直接展示信号点评、认知延伸和下期追踪样例
+- 新增可选 continuity JSON 产物，让下期跟踪状态以显式、可移植、可编辑的文件存在，而不是隐藏记忆
+- `finalize` 与 `demo` 支持 `--continuity-file`，可把下期追踪实体、问题、来源和时间范围写成用户可见的 JSON 状态文件
+- `finalize` 新增 `acceptance_summary`，用更短的机器可读摘要暴露通过状态、阻断项数量、warning 数、保留条目、继续跟踪条目、单来源高影响项和证据缺口
+- `demo` 默认启用全认知层，内置样例覆盖 `本期信号点评`、`认知延伸`、`下期追踪`，方便公开版用户一条命令验证新功能
 - 主流程扩展为 `collect -> normalize/deduplicate -> rank/retain -> verify -> render -> cognition -> acceptance -> polish`，把认知层放在事实渲染之后、验收之前
 - 新增 `references/cognitive-enhancements.md`，明确认知增强的配置、证据边界、批判检查、洞察筛选、信号评论和连续跟踪规则
 - 输入契约、输出模板、验收清单、编辑评分规则、内置增强说明、本地 runner 文档和 `agents/openai.yaml` 均已接入 `cognitive_features`
@@ -201,7 +208,8 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 - 可见的 `sprout` 拓展必须同时标注 `依据` 与 `性质：推断`，避免把洞察、类比或预判混写成已验证事实
 - `interrogate` 会检查单来源高影响条目、无依据因果判断、未检查反证等问题，并将风险写入机器可读验收警告
 - `continuity` 只接受来自上期简报、调用方输入、watchlist 文件或外部自动化的状态，不引入隐藏的全局用户画像，方便公开发布和用户自定义
-- 本地 runner、CLI、执行队列和渲染命令完成配置透传，并补充认知特性、验收警告和运行安全相关回归测试
+- 本地 runner、CLI、执行队列和渲染命令完成配置透传，并补充认知预设、demo 命令、continuity 文件、验收摘要、验收警告和运行安全相关回归测试
+- 自动化测试扩展至 27 条，并继续通过 Python 语法检查、skill 结构校验和 `git diff --check`
 - 修正 `Last30Days` 的说明边界：它是开发活动回顾 skill，不用于当前新闻检索
 - 发布版本定义为 `v0.1.5`，同时将 UI/agent 元数据版本校准到 `0.1.5`
 
@@ -307,6 +315,18 @@ Core capabilities include:
 - Inference stays separated: visible extensions must name their basis and inference status instead of blending forecast or interpretation into reported facts
 - Public-release friendly: no hidden user state or private service dependency is required; users can customize sources, templates, watchlists, and automation
 
+### Cognitive Features
+
+Briefs are compact by default: they run the quiet `interrogate` evidence-risk gate without rendering visible insight sections. To see signal commentary, evidence-grounded insight extensions, and next-cycle tracking, use:
+
+- `cognitive_features=compact`: default review-only profile
+- `cognitive_features=insight`: review plus `sprout` and `commentary`
+- `cognitive_features=analyst`: review plus `sprout`, `commentary`, and `continuity`
+- `cognitive_features=all`: shorthand for the full visible set
+- `cognitive_features=off`: summary-only output
+
+For the local runner, try `python3 scripts/standalone_runner.py demo --cognitive-features all`. Continuity can be written to an explicit JSON file, keeping state portable and user-editable instead of hidden.
+
 ### Why This Skill
 
 Many news tools are good at collecting links, and many writing tools are good at polishing prose. The harder job is turning overlapping, cross-topic, multi-source current-affairs input into a ranked, readable briefing that can actually be delivered. That is the core value of `more-news-briefing`.
@@ -393,6 +413,11 @@ Default delivery format:
 ### v0.1.5
 
 - Added configurable `cognitive_features` with `interrogate`, `sprout`, `commentary`, `continuity`, and `off`; the default keeps only the quiet `interrogate` review gate enabled so ordinary briefs stay compact
+- Added cognitive presets `compact`, `insight`, `analyst`, and `all`, plus a runner `demo` command that renders visible commentary, insight extensions, and continuity handoff examples
+- Added optional continuity JSON artifact output so next-cycle tracking can stay explicit, portable, and user-editable
+- Added `--continuity-file` to `finalize` and `demo`, writing next-cycle entities, questions, sources, and time horizon into a user-visible JSON state file
+- Added `acceptance_summary` to `finalize`, exposing compact machine-readable counts for pass status, blockers, warnings, retained items, follow-up items, single-source high-impact items, and evidence gaps
+- Defaulted `demo` to the full cognitive layer so public users can verify signal commentary, insight extensions, and continuity tracking with one command
 - Extended the workflow to `collect -> normalize/deduplicate -> rank/retain -> verify -> render -> cognition -> acceptance -> polish`, placing cognition after factual rendering and before acceptance
 - Added `references/cognitive-enhancements.md` to document configuration, evidence boundaries, critical checks, insight-extension selection, signal commentary, and continuity behavior
 - Wired `cognitive_features` through the input contract, output templates, acceptance checklist, editorial rubric, embedded enhancements, local runner docs, and `agents/openai.yaml`
@@ -400,7 +425,8 @@ Default delivery format:
 - Required visible `sprout` extensions to include both a basis and an explicit inference label, keeping insight, analogy, and forecast separate from verified facts
 - Added `interrogate` warnings for single-source high-impact items, causal claims without basis, and explicitly unchecked counterevidence
 - Kept `continuity` portable by requiring state from prior digests, caller input, watchlist files, or external automation instead of hidden global user state
-- Propagated cognitive configuration through the local runner, CLI, execution queue, and render commands, with regression coverage for cognitive features, acceptance warnings, and safe execution behavior
+- Propagated cognitive configuration through the local runner, CLI, execution queue, and render commands, with regression coverage for cognitive presets, the demo command, continuity files, acceptance summaries, acceptance warnings, and safe execution behavior
+- Expanded the automated suite to 27 tests while retaining clean Python syntax, skill-structure validation, and `git diff --check`
 - Corrected the `Last30Days` boundary: it is a developer-activity review skill, not a current-affairs retrieval source
 - Defined the public release as `v0.1.5` and aligned UI/agent metadata to `0.1.5`
 

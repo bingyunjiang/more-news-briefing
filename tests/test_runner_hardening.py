@@ -289,11 +289,25 @@ class RunnerHardeningTests(unittest.TestCase):
         all_contract = runner.build_contract(
             parser.parse_args(["contract", "--cognitive-features", "all"])
         )
+        insight_contract = runner.build_contract(
+            parser.parse_args(["contract", "--cognitive-features", "insight"])
+        )
+        analyst_contract = runner.build_contract(
+            parser.parse_args(["contract", "--cognitive-features", "analyst"])
+        )
         partial_contract = runner.build_contract(
             parser.parse_args(["contract", "--cognitive-features", "interrogate,sprout"])
         )
         self.assertEqual(
             all_contract.cognitive_features,
+            ["interrogate", "sprout", "commentary", "continuity"],
+        )
+        self.assertEqual(
+            insight_contract.cognitive_features,
+            ["interrogate", "sprout", "commentary"],
+        )
+        self.assertEqual(
+            analyst_contract.cognitive_features,
             ["interrogate", "sprout", "commentary", "continuity"],
         )
         self.assertEqual(partial_contract.cognitive_features, ["interrogate", "sprout"])

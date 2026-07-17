@@ -34,7 +34,7 @@ If an item is labeled `线索待证` or `待确认`, it should usually move to `
 
 ## Optional cognitive sections
 
-Render these only when enabled by `cognitive_features` and supported by structured item fields:
+Render these only when enabled by `cognitive_features` and supported by structured item fields. The common profiles are `compact`, `insight`, `analyst`, `all`, and `off`.
 
 ```md
 ## 本期信号点评
@@ -48,6 +48,8 @@ Render these only when enabled by `cognitive_features` and supported by structur
 ```
 
 Keep `interrogate` non-visible by default. It belongs in acceptance warnings unless the user asks to see the challenge questions.
+
+When `continuity` is enabled and the caller provides a `--continuity-file`, write next-cycle tracking state to JSON as an explicit artifact. Do not treat continuity as hidden memory.
 
 ## Template 1: Short briefing
 

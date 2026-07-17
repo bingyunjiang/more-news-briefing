@@ -11,12 +11,21 @@ Set `cognitive_features` to a comma-separated subset of:
 3. `commentary`: identify the few signals that best explain the period
 4. `continuity`: emit explicit questions and indicators for the next run
 
-Default to `interrogate`. Use `off` to disable the layer. Enable `sprout`, `commentary`, or `continuity` only when the user requests more interpretation, uses an analyst-oriented format, or configures them for a recurring briefing.
+Default to `interrogate`. Use `off` to disable the layer. Enable `sprout`, `commentary`, or `continuity` only when the user requests more interpretation, uses an analyst-oriented format, asks for a demo/test of the cognitive layer, or configures them for a recurring briefing.
+
+Supported presets:
+
+1. `compact`: `interrogate`
+2. `insight`: `interrogate,sprout,commentary`
+3. `analyst`: `interrogate,sprout,commentary,continuity`
+4. `all`: `interrogate,sprout,commentary,continuity`
+5. `off`: no cognitive layer
 
 Example:
 
 ```text
 cognitive_features=interrogate,sprout,continuity
+cognitive_features=all
 ```
 
 ## Evidence Boundary
@@ -75,6 +84,6 @@ Avoid trivia, generic analogies, motivational quotations, and connections that c
 
 ## Commentary And Continuity
 
-`commentary` should compress the period into one to three discriminating signals, not praise individual stories. `continuity` should produce a reusable handoff containing concrete entities, indicators, unresolved questions, and a time horizon.
+`commentary` should compress the period into one to three discriminating signals, not praise individual stories. `continuity` should produce a reusable handoff containing concrete entities, indicators, unresolved questions, and a time horizon. When using the local runner, write this handoff to an explicit JSON artifact with `--continuity-file` when a downstream automation or next-cycle briefing should consume it.
 
 The skill does not own a global user profile or hidden persistent memory. For portable GitHub use, continuity state must be supplied by the caller, a prior digest, a watchlist file, or an external automation layer.

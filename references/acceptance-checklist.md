@@ -53,6 +53,7 @@ Pass only if:
 3. Every visible extension states `依据` and `性质：推断`
 4. Editorial commentary and future tracking are not presented as reported facts
 5. Disabling cognitive features leaves the core digest unchanged
+6. `continuity` can be exported as explicit JSON when the next run needs state
 
 ## Reusability
 
@@ -64,7 +65,8 @@ Pass only if:
 4. A writable run produces a UTF-8 `.md` artifact unless the user requested chat-only output
 5. The default artifact follows `daily-news-YYYY-MM-DD.md`, or uses the explicit output path supplied by the caller
 6. The final response exposes the saved artifact path
+7. If a continuity artifact is produced, it is user-visible and portable
 
 ## Machine report
 
-`finalize` emits `acceptance_report` with `passed`, `blocking_issues`, `warnings`, retained count, follow-up count, and `cognitive_review`. Blocking issues prevent the Markdown artifact from being written; count shortfalls, high-impact evidence gaps, and interrogation findings remain visible warnings for operator review.
+`finalize` emits `acceptance_report` with `passed`, `blocking_issues`, `warnings`, retained count, follow-up count, and `cognitive_review`. It also emits `acceptance_summary` with compact counts for warnings, blocking issues, retained items, follow-up items, single-source high-impact items, and evidence gaps. Blocking issues prevent the Markdown artifact from being written; count shortfalls, high-impact evidence gaps, and interrogation findings remain visible warnings for operator review.

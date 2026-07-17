@@ -32,6 +32,12 @@ DEFAULT_FORMAT = "standard_digest"
 DEFAULT_AUDIENCE = "research"
 DEFAULT_MODE = "full"
 DEFAULT_COGNITIVE_FEATURES = ["interrogate"]
+COGNITIVE_FEATURE_PRESETS = {
+    "compact": ["interrogate"],
+    "insight": ["interrogate", "sprout", "commentary"],
+    "analyst": ["interrogate", "sprout", "commentary", "continuity"],
+    "all": ["interrogate", "sprout", "commentary", "continuity"],
+}
 DEFAULT_SOURCE_ROLES = ["discovery", "verification"]
 SPECIALTY_SOURCE_ROLES = ["discovery", "verification", "context", "watch"]
 DEFAULT_TOPICS = ["AI与科技", "政治与政策", "商业与市场", "文化与社会", "体育"]
@@ -201,6 +207,99 @@ QUERY_LIBRARY = {
     },
 }
 
+DEMO_ITEMS = [
+    {
+        "title": "AI监管机构发布模型评估规则",
+        "what": "监管机构发布面向高影响模型的评估和披露要求。",
+        "why": "它会改变模型上线前的合规节奏和企业发布窗口。",
+        "bucket": "AI与科技",
+        "source_level": "首选证据",
+        "evidence_status": "已确认",
+        "sources": ["regulator notice", "company policy update"],
+        "signal_commentary": "AI发布竞争正在和合规门槛同步升温。",
+        "insight_extensions": [
+            {
+                "insight": "模型发布节奏可能从一次性发布转向分阶段灰度。",
+                "basis": "评估与披露要求需要在上线前完成",
+            }
+        ],
+        "continuity": "下期核对主要模型公司是否调整发布时间表或发布材料。",
+        "counterevidence_checked": True,
+    },
+    {
+        "title": "央行释放利率路径偏谨慎信号",
+        "what": "央行在最新表态中强调通胀仍需观察，市场下调近期降息概率。",
+        "why": "利率预期会影响成长股估值、汇率和风险资产偏好。",
+        "bucket": "商业与市场",
+        "source_level": "首选证据",
+        "evidence_status": "已确认",
+        "sources": ["central bank statement", "market data"],
+        "signal_commentary": "宏观定价仍被政策措辞牵引，市场对单次数据更敏感。",
+        "insight_extensions": [
+            {
+                "insight": "如果后续就业或通胀数据分化，资产波动可能先于政策变化放大。",
+                "basis": "市场已根据央行措辞调整降息概率",
+            }
+        ],
+        "continuity": "下期核对通胀、就业和收益率曲线是否同向变化。",
+        "counterevidence_checked": True,
+    },
+    {
+        "title": "国际赛事进入决赛周",
+        "what": "多项国际赛事进入决赛或淘汰赛阶段，转播和赞助曝光集中上升。",
+        "why": "体育流量高峰会影响平台排期、广告库存和品牌投放节奏。",
+        "bucket": "体育",
+        "source_level": "次选证据",
+        "evidence_status": "交叉验证中",
+        "sources": ["official tournament page", "sports wire"],
+        "signal_commentary": "体育桶的价值不只是比分，还包括注意力迁移。",
+        "insight_extensions": [
+            {
+                "insight": "赛事流量可能短期挤压娱乐和社交平台的其他内容曝光。",
+                "basis": "决赛周通常带来转播和赞助集中投放",
+            }
+        ],
+        "continuity": "下期核对决赛结果、转播数据和主要赞助动作。",
+        "counterevidence_checked": True,
+    },
+    {
+        "title": "城市更新项目进入集中招标期",
+        "what": "多地发布城市更新和公共设施改造项目招标计划。",
+        "why": "项目节奏会影响建材、工程服务和地方财政支出预期。",
+        "bucket": "政治与政策",
+        "source_level": "首选证据",
+        "evidence_status": "已确认",
+        "sources": ["municipal procurement notice", "official project list"],
+        "signal_commentary": "政策项目正在从规划叙事进入执行与采购阶段。",
+        "insight_extensions": [
+            {
+                "insight": "如果招标节奏持续，相关企业订单确认可能早于收入确认改善。",
+                "basis": "官方项目清单和采购计划已进入公开招标",
+            }
+        ],
+        "continuity": "下期核对中标公告、预算调整和项目开工节点。",
+        "counterevidence_checked": True,
+    },
+    {
+        "title": "流媒体平台调整原创内容排期",
+        "what": "主要流媒体平台调整部分原创剧集和纪录片上线节奏。",
+        "why": "排期变化会影响会员增长、广告库存和内容营销窗口。",
+        "bucket": "文化与社会",
+        "source_level": "次选证据",
+        "evidence_status": "交叉验证中",
+        "sources": ["platform schedule", "entertainment trade report"],
+        "signal_commentary": "文化内容竞争继续围绕档期和平台注意力展开。",
+        "insight_extensions": [
+            {
+                "insight": "平台可能把高成本内容集中到更有订阅拉动能力的窗口。",
+                "basis": "原创内容排期被集中调整",
+            }
+        ],
+        "continuity": "下期核对会员数据、广告销售反馈和平台后续排期。",
+        "counterevidence_checked": True,
+    },
+]
+
 DEFAULT_ANySEARCH_MAX_RESULTS = {
     "quick": 3,
     "standard": 5,
@@ -364,9 +463,9 @@ def normalize_cognitive_features(value: str | None) -> list[str]:
         return DEFAULT_COGNITIVE_FEATURES.copy()
     if value.strip().lower() in {"", "off", "none"}:
         return []
-    if value.strip().lower() == "all":
-        return ["interrogate", "sprout", "commentary", "continuity"]
-
+    preset = COGNITIVE_FEATURE_PRESETS.get(value.strip().lower())
+    if preset:
+        return preset.copy()
     return list(dict.fromkeys(part.lower() for part in split_csv(value)))
 
 
@@ -1942,6 +2041,26 @@ def build_acceptance_report(
     }
 
 
+def build_acceptance_summary(report: dict[str, Any]) -> dict[str, Any]:
+    warnings = [str(warning) for warning in report.get("warnings", [])]
+    return {
+        "passed": bool(report.get("passed")),
+        "retained_count": int(report.get("retained_count", 0)),
+        "follow_up_count": int(report.get("follow_up_count", 0)),
+        "blocking_issue_count": len(report.get("blocking_issues", [])),
+        "warning_count": len(warnings),
+        "single_source_high_impact_count": sum(
+            1 for warning in warnings if warning.startswith("single_source_high_impact:")
+        ),
+        "high_impact_evidence_gap_count": sum(
+            1 for warning in warnings if warning.startswith("high_impact_needs_stronger_evidence:")
+        ),
+        "cognitive_review_enabled": bool(
+            report.get("cognitive_review", {}).get("enabled", False)
+        ),
+    }
+
+
 def apply_verification_results(
     items: list[dict[str, Any]],
     verification_results: list[dict[str, Any]],
@@ -2229,6 +2348,37 @@ def render_cognitive_sections(contract: Contract, items: list[dict[str, Any]]) -
     return "\n".join(sections).strip()
 
 
+def build_continuity_payload(contract: Contract, items: list[dict[str, Any]]) -> dict[str, Any]:
+    main_items, follow_ups = split_items(items)
+    continuity_items: list[dict[str, Any]] = []
+    for item in main_items:
+        continuity = str(item.get("continuity", "")).strip()
+        follow_up = str(item.get("follow_up", "") or item.get("need_confirm", "")).strip()
+        if not continuity and not follow_up:
+            continue
+        continuity_items.append(
+            {
+                "item_id": item.get("item_id", ""),
+                "title": item.get("title", ""),
+                "bucket": item.get("bucket", ""),
+                "continuity": continuity,
+                "follow_up": follow_up,
+                "sources": item.get("sources", []),
+                "time_horizon": "next_cycle",
+            }
+        )
+    return {
+        "version": 1,
+        "date": date.today().isoformat(),
+        "cognitive_features": contract.cognitive_features,
+        "time_window": contract.time_window,
+        "topic_mix": contract.topic_mix,
+        "items": continuity_items,
+        "follow_up_topics": follow_ups,
+        "state_boundary": "portable_explicit_file_no_hidden_memory",
+    }
+
+
 def render_digest(contract: Contract, items: list[dict[str, Any]], item_limit: int | None = None) -> str:
     main_items, follow_ups = split_items(items)
     limited_items = main_items[: choose_item_limit(contract, item_limit)]
@@ -2299,12 +2449,49 @@ def cmd_finalize(args: argparse.Namespace) -> int:
         "output_file": output_file,
         "rendered": output,
         "acceptance_report": acceptance_report,
+        "acceptance_summary": build_acceptance_summary(acceptance_report),
     }
     if output_file:
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(output, encoding="utf-8")
         payload["written_to"] = output_file
+    if args.continuity_file:
+        continuity_payload = build_continuity_payload(contract, items)
+        write_json(Path(args.continuity_file), continuity_payload)
+        payload["continuity_file"] = args.continuity_file
+        payload["continuity"] = continuity_payload
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_demo(args: argparse.Namespace) -> int:
+    if getattr(args, "cognitive_features", None) is None:
+        args.cognitive_features = "all"
+    contract = build_contract(args)
+    items = prepare_items(contract, DEMO_ITEMS)
+    output = render_digest(contract, items, args.item_limit)
+    acceptance_report = build_acceptance_report(contract, items, output)
+    if not acceptance_report["passed"]:
+        raise ValueError(
+            "demo digest failed acceptance: " + ", ".join(acceptance_report["blocking_issues"])
+        )
+    payload = {
+        "contract": contract.to_dict(),
+        "rendered": output,
+        "acceptance_report": acceptance_report,
+        "acceptance_summary": build_acceptance_summary(acceptance_report),
+    }
+    if args.output_file:
+        output_path = Path(args.output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(output, encoding="utf-8")
+        payload["written_to"] = str(output_path)
+    if args.continuity_file:
+        continuity_payload = build_continuity_payload(contract, items)
+        write_json(Path(args.continuity_file), continuity_payload)
+        payload["continuity_file"] = args.continuity_file
+        payload["continuity"] = continuity_payload
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 
@@ -2351,7 +2538,10 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--mode", choices=["full", "standard", "minimal"])
         subparser.add_argument(
             "--cognitive-features",
-            help="Comma-separated: interrogate,sprout,commentary,continuity; use off to disable",
+            help=(
+                "Preset compact|insight|analyst|all, comma-separated "
+                "interrogate,sprout,commentary,continuity, or off"
+            ),
         )
         subparser.add_argument("--specialty", default="")
         subparser.add_argument("--specialty-scope", default="")
@@ -2439,8 +2629,16 @@ def build_parser() -> argparse.ArgumentParser:
     finalize_parser.add_argument("--items-file", required=True)
     finalize_parser.add_argument("--verification-results-file")
     finalize_parser.add_argument("--output-file")
+    finalize_parser.add_argument("--continuity-file")
     finalize_parser.add_argument("--item-limit", type=int)
     finalize_parser.set_defaults(func=cmd_finalize)
+
+    demo_parser = subparsers.add_parser("demo", help="Render a built-in cognitive-layer demo")
+    add_common(demo_parser)
+    demo_parser.add_argument("--output-file")
+    demo_parser.add_argument("--continuity-file")
+    demo_parser.add_argument("--item-limit", type=int)
+    demo_parser.set_defaults(func=cmd_demo)
     return parser
 
 

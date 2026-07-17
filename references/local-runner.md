@@ -32,8 +32,10 @@ python3 scripts/standalone_runner.py execute --items-file items.json --draft-fil
 python3 scripts/standalone_runner.py prepare --items-file candidates.json --output-file items.json
 python3 scripts/standalone_runner.py queries --topic-mix default
 python3 scripts/standalone_runner.py digest --items-file items.json
-python3 scripts/standalone_runner.py digest --items-file items.json --cognitive-features interrogate,sprout
+python3 scripts/standalone_runner.py digest --items-file items.json --cognitive-features insight
 python3 scripts/standalone_runner.py finalize --items-file items.json
+python3 scripts/standalone_runner.py finalize --items-file items.json --continuity-file continuity.json
+python3 scripts/standalone_runner.py demo --cognitive-features all --output-file demo.md --continuity-file demo.continuity.json
 ```
 
 The runner now internalizes a subset of defaults from:
@@ -345,7 +347,8 @@ python3 scripts/standalone_runner.py digest --items-file items.json --format qui
 python3 scripts/standalone_runner.py digest --items-file items.json --format analyst_watch
 python3 scripts/standalone_runner.py digest --items-file items.json --format long_message
 python3 scripts/standalone_runner.py digest --items-file items.json --audience executive
-python3 scripts/standalone_runner.py digest --items-file items.json --cognitive-features interrogate,sprout,continuity
+python3 scripts/standalone_runner.py digest --items-file items.json --cognitive-features analyst
+python3 scripts/standalone_runner.py digest --items-file items.json --cognitive-features all
 ```
 
 Supported rendering rules include:
@@ -358,7 +361,16 @@ Supported rendering rules include:
 
 If `--format` is omitted, the runner infers a default from `depth` and `audience`.
 
-`--cognitive-features` accepts `interrogate`, `sprout`, `commentary`, and `continuity`. The default is `interrogate`; pass `off` to preserve a summary-only output. Visible extensions render only when their structured fields are present, and each sprout extension includes its basis plus `性质：推断`.
+`--cognitive-features` accepts presets or explicit feature lists:
+
+1. `compact`: `interrogate`
+2. `insight`: `interrogate,sprout,commentary`
+3. `analyst`: `interrogate,sprout,commentary,continuity`
+4. `all`: `interrogate,sprout,commentary,continuity`
+5. `off`: summary-only output
+6. explicit comma-separated subsets such as `interrogate,sprout`
+
+Visible extensions render only when their structured fields are present, and each sprout extension includes its basis plus `性质：推断`.
 
 The `contract` output now also includes `adapter_discovery`, so downstream callers can resolve the briefing contract and inspect local adapter availability in one call.
 
@@ -394,6 +406,7 @@ Examples:
 python3 scripts/standalone_runner.py finalize --items-file items.json
 python3 scripts/standalone_runner.py finalize --items-file items.json --verification-results-file items.verification-results.json
 python3 scripts/standalone_runner.py finalize --items-file items.json --verification-results-file items.verification-results.json --output-file custom-brief.md
+python3 scripts/standalone_runner.py finalize --items-file items.json --continuity-file continuity.json
 ```
 
 Use this command when you want one execution-facing step that:
@@ -403,14 +416,36 @@ Use this command when you want one execution-facing step that:
 3. renders the final digest
 4. writes it as UTF-8 Markdown to `daily-news-YYYY-MM-DD.md` by default
 5. uses `--output-file` when the caller needs a custom path or filename
+6. uses `--continuity-file` when the caller wants explicit next-cycle tracking state as JSON
 
 If `--verification-results-file` is omitted, `finalize` will try the standard shared path inferred from `items-file`.
+
+The continuity file is portable state, not hidden memory. It includes the run date, enabled cognitive features, topic mix, follow-up topics, and item-level next-cycle checks.
 
 Current `verdict` behavior:
 
 1. `keep` / `confirm`: keep the item in the main digest and apply stronger fields if provided
 2. `downgrade`: keep the item, but lower its evidence display using the supplied or default downgraded labels
 3. `watch` / `move_to_watch` / `continue_tracking`: move the item into `继续跟踪` and preserve `follow_up` if provided
+
+### `demo`
+
+Render a built-in sample briefing that demonstrates visible cognitive sections.
+
+Examples:
+
+```bash
+python3 scripts/standalone_runner.py demo
+python3 scripts/standalone_runner.py demo --cognitive-features all
+python3 scripts/standalone_runner.py demo --output-file demo.md --continuity-file demo.continuity.json
+```
+
+By default, `demo` enables `all` cognitive features so users can immediately see:
+
+1. `本期信号点评`
+2. `认知延伸`
+3. `下期追踪`
+4. an optional explicit continuity JSON artifact
 
 ## Ownership rule
 
