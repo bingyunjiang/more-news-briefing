@@ -24,7 +24,7 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 ## 海报展示 / Poster Showcase
 
-三张海报依次介绍项目的差异定位、核心功能与完整操作步骤。点击图片可查看 2160 × 2880 原图。
+依次介绍项目的差异定位、核心功能与完整操作步骤。
 
 ### 01 · 差异定位 / Positioning
 
