@@ -33,7 +33,14 @@ class RunnerHardeningTests(unittest.TestCase):
         batch = runner.build_anysearch_batches(contract)[0]
 
         self.assertIsInstance(batch["command_argv"], list)
-        self.assertEqual(batch["command_hint"], shlex.join(batch["command_argv"]))
+        self.assertEqual(
+            batch["command_hint"],
+            runner.format_command_hint(batch["command_argv"]),
+        )
+        self.assertEqual(
+            batch["command_hints"]["posix"],
+            shlex.join(batch["command_argv"]),
+        )
         self.assertIn("touch /tmp/should-not-run", batch["command_argv"][-1])
 
     def test_unknown_verification_verdict_is_rejected(self) -> None:
@@ -175,6 +182,10 @@ class RunnerHardeningTests(unittest.TestCase):
         self.assertIsInstance(verify_task["merge_command_argv"], list)
         self.assertEqual(
             verify_task["merge_command_hint"],
+            runner.format_command_hint(verify_task["merge_command_argv"]),
+        )
+        self.assertEqual(
+            verify_task["merge_command_hints"]["posix"],
             shlex.join(verify_task["merge_command_argv"]),
         )
         self.assertIsInstance(render_task["command_argv"], list)

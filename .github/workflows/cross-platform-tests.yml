@@ -1,0 +1,32 @@
+name: Cross-platform tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+        python-version: ["3.10", "3.13"]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile runner
+        run: python -m py_compile scripts/standalone_runner.py
+      - name: Parse PowerShell helper
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: "[scriptblock]::Create((Get-Content -Raw scripts/generate_readme_promo_images.ps1)) | Out-Null"
+      - name: Run test suite
+        run: python -m unittest discover -s tests -v

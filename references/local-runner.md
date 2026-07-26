@@ -38,6 +38,8 @@ python3 scripts/standalone_runner.py finalize --items-file items.json --continui
 python3 scripts/standalone_runner.py demo --cognitive-features all --output-file demo.md --continuity-file demo.continuity.json
 ```
 
+The examples use the macOS/Linux `python3` launcher. On Windows PowerShell, use `py -3` (or `python` when that is the installed launcher) and either slash style accepted by Python. See [windows-compatibility.md](./windows-compatibility.md) for tested commands, encoding behavior, and generated command hints.
+
 The runner now internalizes a subset of defaults from:
 
 1. `input-contract.md`
@@ -146,9 +148,10 @@ When the collect route recommends vendored `anysearch`, the output now includes:
 2. `anysearch_batches`
 3. a ready-to-use `payload` for each batch
 4. a shell-safe `command_argv` for the vendored `anysearch_cli.py`
-5. a `command_hint` rendered with shell quoting for display only
+5. a host-selected `command_hint` for backward-compatible display
+6. `command_hints` variants for POSIX shells, PowerShell, and `cmd.exe`
 
-Executors must run `command_argv` without a shell. Do not execute `command_hint` through `sh -c`, `shell=True`, or equivalent APIs.
+Executors must run `command_argv` without a shell. Do not execute any hint through `sh -c`, `cmd /c`, `Invoke-Expression`, `shell=True`, or equivalent APIs.
 
 When the collect route stays on the built-in path, the output falls back to:
 

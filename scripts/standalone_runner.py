@@ -15,6 +15,7 @@ import json
 import os
 import re
 import shlex
+import subprocess
 import sys
 from dataclasses import dataclass, field
 from datetime import date
@@ -305,6 +306,47 @@ DEFAULT_ANySEARCH_MAX_RESULTS = {
     "standard": 5,
     "analyst": 6,
 }
+
+
+def powershell_quote(value: str) -> str:
+    """Quote one literal argument for a copy-pasteable PowerShell command."""
+    return "'" + value.replace("'", "''") + "'"
+
+
+def build_command_hints(argv: list[str]) -> dict[str, str]:
+    """Render display-only command hints without weakening the argv contract."""
+    if not argv:
+        return {"posix": "", "windows_powershell": "", "windows_cmd": ""}
+    values = [str(value) for value in argv]
+    return {
+        "posix": shlex.join(values),
+        "windows_powershell": "& " + " ".join(powershell_quote(value) for value in values),
+        "windows_cmd": subprocess.list2cmdline(values),
+    }
+
+
+def format_command_hint(argv: list[str], platform: str | None = None) -> str:
+    """Return the host-appropriate display hint; never use it for execution."""
+    hints = build_command_hints(argv)
+    selected = platform or ("windows_powershell" if os.name == "nt" else "posix")
+    aliases = {
+        "powershell": "windows_powershell",
+        "pwsh": "windows_powershell",
+        "cmd": "windows_cmd",
+        "windows": "windows_powershell",
+    }
+    selected = aliases.get(selected, selected)
+    if selected not in hints:
+        raise ValueError(f"unknown command hint platform: {platform}")
+    return hints[selected]
+
+
+def configure_utf8_stdio() -> None:
+    """Keep redirected Chinese JSON/Markdown output UTF-8 on every supported OS."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="backslashreplace")
 
 
 @dataclass
@@ -811,7 +853,8 @@ def build_anysearch_batches(contract: Contract) -> list[dict[str, Any]]:
                 "query_objects": query_objects,
                 "payload": compact_payload,
                 "command_argv": command_argv,
-                "command_hint": shlex.join(command_argv),
+                "command_hint": format_command_hint(command_argv),
+                "command_hints": build_command_hints(command_argv),
             }
         )
     return batches
@@ -1361,7 +1404,8 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
         argv = item.pop("command_argv", [])
         item["order"] = ordinal
         item["command_argv"] = argv
-        item["command"] = shlex.join(argv) if argv else item.get("command", "")
+        item["command"] = format_command_hint(argv) if argv else item.get("command", "")
+        item["command_hints"] = build_command_hints(argv)
         queue.append(item)
         ordinal += 1
 
@@ -1453,7 +1497,8 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
                     success_signal="task returns keep/downgrade/watch judgment with stronger evidence",
                     next_action_summary="append normalized verification result into the shared verification-results file",
                     merge_command_argv=merge_argv,
-                    merge_command_hint=shlex.join(merge_argv) if merge_argv else "",
+                    merge_command_hint=format_command_hint(merge_argv),
+                    merge_command_hints=build_command_hints(merge_argv),
                 )
         elif execution_mode == "built_in_verification":
             tasks = step.get("artifacts", []) or [{}]
@@ -1490,7 +1535,8 @@ def build_execute_queue(handoff_package: dict[str, Any]) -> dict[str, Any]:
                     result_stub_file=result_stub_file,
                     success_signal="candidate is normalized into keep/downgrade/watch verification result",
                     next_action_summary="write the built-in verification judgment into the shared verification-results file",
-                    merge_command_hint=shlex.join(merge_argv) if merge_argv else "",
+                    merge_command_hint=format_command_hint(merge_argv),
+                    merge_command_hints=build_command_hints(merge_argv),
                     merge_command_argv=merge_argv,
                 )
         elif execution_mode == "render_digest":
@@ -1723,9 +1769,11 @@ def cmd_execute(args: argparse.Namespace) -> int:
         "handoff_package": handoff,
         "execute_queue": build_execute_queue(handoff),
         "verification_results_init_command_argv": verification_init_argv,
-        "verification_results_init_command_hint": shlex.join(verification_init_argv) if verification_init_argv else "",
+        "verification_results_init_command_hint": format_command_hint(verification_init_argv),
+        "verification_results_init_command_hints": build_command_hints(verification_init_argv),
         "digest_command_argv": digest_argv,
-        "digest_command_hint": shlex.join(digest_argv) if digest_argv else "",
+        "digest_command_hint": format_command_hint(digest_argv),
+        "digest_command_hints": build_command_hints(digest_argv),
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
@@ -1835,9 +1883,14 @@ def build_verification_result_package(
     }
 
 
-def write_json(path: Path, payload: Any) -> None:
+def write_utf8_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    with path.open("w", encoding="utf-8", newline="\n") as output_file:
+        output_file.write(content)
+
+
+def write_json(path: Path, payload: Any) -> None:
+    write_utf8_text(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
 
 
 def render_sources(sources: Any) -> str:
@@ -2453,8 +2506,7 @@ def cmd_finalize(args: argparse.Namespace) -> int:
     }
     if output_file:
         output_path = Path(output_file)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(output, encoding="utf-8")
+        write_utf8_text(output_path, output)
         payload["written_to"] = output_file
     if args.continuity_file:
         continuity_payload = build_continuity_payload(contract, items)
@@ -2484,8 +2536,7 @@ def cmd_demo(args: argparse.Namespace) -> int:
     }
     if args.output_file:
         output_path = Path(args.output_file)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(output, encoding="utf-8")
+        write_utf8_text(output_path, output)
         payload["written_to"] = str(output_path)
     if args.continuity_file:
         continuity_payload = build_continuity_payload(contract, items)
@@ -2643,6 +2694,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    configure_utf8_stdio()
     parser = build_parser()
     args = parser.parse_args()
     return args.func(args)

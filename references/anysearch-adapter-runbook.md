@@ -30,22 +30,22 @@ If none of these are true, stay on the skill's built-in standalone route.
 
 Run these checks before the first networked search:
 
-1. Confirm the skill exists at `/Users/Bing/.codex/skills/anysearch`
+1. Confirm the vendored adapter exists at `references/skills/anysearch`
 2. Run the offline interface spec once:
 
 ```bash
-python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py doc
+python references/skills/anysearch/scripts/anysearch_cli.py doc
 ```
 
 3. Optionally inspect command help if needed:
 
 ```bash
-python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py search --help
-python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py batch_search --help
-python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py extract --help
+python references/skills/anysearch/scripts/anysearch_cli.py search --help
+python references/skills/anysearch/scripts/anysearch_cli.py batch_search --help
+python references/skills/anysearch/scripts/anysearch_cli.py extract --help
 ```
 
-If Python is unavailable, fall back to the Node or shell CLI described in the `anysearch` skill.
+Use `python3` instead of `python` when that is the installed launcher on macOS/Linux, or `py -3` on Windows. If Python is unavailable, fall back to another retrieval route; the core briefing workflow does not require this adapter.
 
 ## Query design rule
 
@@ -92,7 +92,7 @@ This keeps each call readable while still using parallel retrieval.
 ### Batch A example
 
 ```bash
-python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py batch_search \
+python references/skills/anysearch/scripts/anysearch_cli.py batch_search \
   --queries '[
     {"query":"AI model launch regulation funding","content_types":"news","freshness":"week","max_results":5},
     {"query":"official statement policy sanctions summit law","content_types":"news","freshness":"week","max_results":5},
@@ -103,7 +103,7 @@ python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py batch_searc
 ### Batch B example
 
 ```bash
-python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py batch_search \
+python references/skills/anysearch/scripts/anysearch_cli.py batch_search \
   --queries '[
     {"query":"festival release platform controversy education survey","content_types":"news","freshness":"week","max_results":5},
     {"query":"championship transfer injury roster final","content_types":"news","freshness":"week","max_results":5},
@@ -114,13 +114,13 @@ python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py batch_searc
 If the politics bucket is weak after one batch, run one tighter second-pass query instead of broadening randomly:
 
 ```bash
-python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py search "official statement ministry white house european commission law" --content_types news --freshness week --max_results 5
+python references/skills/anysearch/scripts/anysearch_cli.py search "official statement ministry white house european commission law" --content_types news --freshness week --max_results 5
 ```
 
 If the culture bucket is weak, run one event-led second pass:
 
 ```bash
-python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py search "festival release platform controversy survey" --content_types news --freshness week --max_results 5
+python references/skills/anysearch/scripts/anysearch_cli.py search "festival release platform controversy survey" --content_types news --freshness week --max_results 5
 ```
 
 ## What to keep from first-pass results
@@ -154,7 +154,7 @@ Good triggers for extraction:
 Example:
 
 ```bash
-python3 /Users/Bing/.codex/skills/anysearch/scripts/anysearch_cli.py extract "https://example.com/news/article"
+python references/skills/anysearch/scripts/anysearch_cli.py extract "https://example.com/news/article"
 ```
 
 Limit extraction to the top 1 to 3 URLs per bucket during first pass. If an item still looks important after extraction, verify it with stronger sources.

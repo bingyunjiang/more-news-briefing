@@ -20,6 +20,7 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 | 版本 | `v0.1.5` |
 | 类型 | AI Agent Skill / 新闻简报技能 |
 | 场景 | 新闻简报 / 日报周报 / 研究跟踪 / 长消息汇总 |
+| 本地运行 | macOS / Windows 10-11 / Linux，Python 3.10+ |
 | 关键词 | `news briefing`, `digest`, `AI`, `policy`, `business`, `WeChat`, `Feishu`, `新闻简报`, `日报`, `周报`, `研究跟踪` |
 
 ## 海报展示 / Poster Showcase
@@ -119,6 +120,17 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 - 如果智能体检测到你的请求包含“测试”、“演示”、“展示认知增强”等意图，会自动启用全认知层
 
 所有可见洞察均标注 `依据` 和 `性质：推断`，不会把推测写成事实。
+
+### Windows 本地运行
+
+核心 runner 不依赖 Bash 或 WSL。在 PowerShell 中进入 skill 目录后可直接运行：
+
+```powershell
+py -3 scripts\standalone_runner.py demo --cognitive-features all --output-file demo.md
+py -3 -m unittest discover -s tests -v
+```
+
+输出统一为无 BOM 的 UTF-8，支持含空格和中文的路径。执行器应直接运行机器可读的 `command_argv`；`command_hints.windows_powershell` 和 `command_hints.windows_cmd` 仅供人工查看。完整说明见 [Windows 兼容性指南](./references/windows-compatibility.md)。
 
 ### 设计原则
 
@@ -340,6 +352,17 @@ Briefs are compact by default: they run the quiet `interrogate` evidence-risk ga
 - `cognitive_features=off`: summary-only output
 
 For the local runner, try `python3 scripts/standalone_runner.py demo --cognitive-features all`. Continuity can be written to an explicit JSON file, keeping state portable and user-editable instead of hidden.
+
+### Windows Local Runner
+
+The core runner does not require Bash or WSL. From PowerShell in the skill directory, run:
+
+```powershell
+py -3 scripts\standalone_runner.py demo --cognitive-features all --output-file demo.md
+py -3 -m unittest discover -s tests -v
+```
+
+Generated files use UTF-8 without a BOM and support paths containing spaces or Chinese characters. Executors should use `command_argv` directly; `command_hints.windows_powershell` and `command_hints.windows_cmd` are display-only. See the [Windows compatibility guide](./references/windows-compatibility.md).
 
 ### Why This Skill
 

@@ -104,6 +104,8 @@ Treat the following as part of the skill's owned core, not borrowed behavior:
 
 If local code support is useful, use the built-in runner documented in [local-runner.md](./references/local-runner.md).
 
+On Windows, read [windows-compatibility.md](./references/windows-compatibility.md) before running the local CLI or inspecting generated command hints. Use `command_argv` for execution; PowerShell and `cmd.exe` strings are display-only compatibility aids.
+
 Treat the runner as an artifact-driven execution contract. Its complete phase order is `collect -> normalize/deduplicate -> rank/retain -> verify -> render -> cognition -> acceptance -> polish`; do not skip the acceptance gate or execute generated command strings through a shell.
 
 When external skills are unavailable, use this standalone route:
@@ -256,7 +258,7 @@ After the evidence-backed digest is stable, apply the configured cognitive layer
 
 If the user explicitly asks to test, demo, preview, or see the cognitive features in action, enable `interrogate,sprout,commentary,continuity` instead of using only the default `interrogate`.
 
-For local smoke tests, use `python3 scripts/standalone_runner.py demo --cognitive-features all` so the visible cognitive sections are exercised. When continuity should feed the next run, write it to an explicit file with `--continuity-file`; do not rely on hidden memory.
+For local smoke tests, use `python3 scripts/standalone_runner.py demo --cognitive-features all` on macOS/Linux or `py -3 scripts\standalone_runner.py demo --cognitive-features all` on Windows so the visible cognitive sections are exercised. When continuity should feed the next run, write it to an explicit file with `--continuity-file`; do not rely on hidden memory.
 
 Avoid filler transitions, generic optimism, and repetitive framing.
 
