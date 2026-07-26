@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, initial-scale=1" />
+    <title>more-news-briefing v0.1.5 功能介绍海报</title>
+    <link rel="stylesheet" href="./promo-v0.1.5.css" />
+  </head>
+  <body class="difference-page">
+    <main class="campaign-poster capability-poster" aria-label="more-news-briefing 功能介绍海报">
+      <header class="difference-topline">
+        <p class="difference-brand"><span>more</span> news briefing</p>
+        <p class="difference-version">Capabilities · 02/03</p>
+      </header>
+
+      <section class="campaign-hero">
+        <div>
+          <p class="difference-eyebrow">A complete briefing system</p>
+          <h1>从信息洪流，<br />到一份能直接用的简报。</h1>
+        </div>
+        <p>覆盖综合热点、专项监测、日报周报与研究观察；外部检索器可以替换，但合同、排序、证据与交付规则始终由本 Skill 负责。</p>
+      </section>
+
+      <section class="capability-rail" aria-label="输入处理与输出">
+        <div><span>INPUT</span><b>主题 · 地域 · 受众 · 优先视角</b></div>
+        <i>→</i>
+        <div class="capability-rail__core"><span>BRIEFING ENGINE</span><b>收集 · 去重 · 排序 · 验证 · 认知 · 验收</b></div>
+        <i>→</i>
+        <div><span>OUTPUT</span><b>Markdown 简报 + 可选 JSON</b></div>
+      </section>
+
+      <section class="capability-grid" aria-label="核心功能">
+        <article class="capability-card capability-card--contract">
+          <span class="cap-num">01</span>
+          <div><p class="tile-kicker">Briefing contract</p><h2>先定简报合同</h2></div>
+          <p>观察窗口、主题组合、深度、格式、受众、来源角色与认知预设一次归一。</p>
+          <div class="mini-pills"><span>主题</span><span>地域</span><span>优先级</span><span>排除项</span><span>观察名单</span></div>
+        </article>
+
+        <article class="capability-card">
+          <span class="cap-num">02</span>
+          <div><p class="tile-kicker">Collect & rank</p><h2>多源收集，跨源去重</h2></div>
+          <p>按发现、验证、背景与观察角色组合来源；同一事件合成一个主条目。</p>
+          <small>后果 → 时效 → 关注度 → 相关性 → 新意</small>
+        </article>
+
+        <article class="capability-card capability-card--evidence">
+          <span class="cap-num">03</span>
+          <div><p class="tile-kicker">Evidence-backed</p><h2>证据化重点新闻</h2></div>
+          <div class="item-fields">
+            <span>发生了什么</span><span class="item-fields__accent">为什么重要</span><span>来源级别</span><span>证据状态</span><span>来源</span>
+          </div>
+          <p>高影响条目优先交叉验证；弱证据进入“继续跟踪”。</p>
+        </article>
+
+        <article class="capability-card capability-card--cognition">
+          <span class="cap-num">04</span>
+          <div><p class="tile-kicker">Cognitive layer</p><h2>可开关的认知层</h2></div>
+          <p>后台拷问默认开启；按需展示本期点评、认知延伸与下期追踪。</p>
+          <div class="cognitive-map"><span>interrogate</span><span>commentary</span><span>sprout</span><span>continuity</span></div>
+        </article>
+
+        <article class="capability-card">
+          <span class="cap-num">05</span>
+          <div><p class="tile-kicker">Delivery views</p><h2>四种交付视图</h2></div>
+          <div class="delivery-list"><span>Quick Brief</span><span>Standard Digest</span><span>Analyst Watch</span><span>Long Message</span></div>
+          <p>适配手机速览、日报周报、研究监测、微信与飞书长消息。</p>
+        </article>
+
+        <article class="capability-card capability-card--system">
+          <span class="cap-num">06</span>
+          <div><p class="tile-kicker">Repeatable system</p><h2>可验收、可复跑、可交接</h2></div>
+          <p>验收阻断不合格产物；Markdown 可发送，continuity JSON 可进入下一周期或自动化。</p>
+          <small>独立 runner · 稳定字段 · 显式产物路径</small>
+        </article>
+      </section>
+
+      <section class="advantage-strip" aria-label="核心优势与差异点">
+        <div class="advantage-heading">
+          <p class="difference-micro">Advantage / difference</p>
+          <h2>摘要只是起点，<br />优势在判断闭环</h2>
+          <p>常见工具解决“看见新闻”；本 Skill 继续回答“如何判断、下一步做什么”。</p>
+        </div>
+        <div class="advantage-content">
+          <div class="advantage-grid">
+            <article><b>01</b><span>更快进入重点</span><p>用“为什么重要”说明影响与优先级。</p></article>
+            <article><b>02</b><span>推断不冒充事实</span><p>本期点评、认知延伸保留依据与性质。</p></article>
+            <article><b>03</b><span>一期不是终点</span><p>继续跟踪、验收门和显式 continuity 接续下期。</p></article>
+          </div>
+          <div class="advantage-compare"><span>常见工具</span><b>聚合 + 摘要</b><i>→</i><span>本 Skill</span><b>合同 + 证据 + 点评 + 延伸 + 跟踪 + 验收</b></div>
+        </div>
+      </section>
+
+      <footer class="difference-footer">
+        <strong>一套合同，一条链路，多种交付</strong>
+        <span>作者 · bingyunjiang</span>
+        <span>GitHub · github.com/bingyunjiang/more-news-briefing</span>
+      </footer>
+    </main>
+  </body>
+</html>

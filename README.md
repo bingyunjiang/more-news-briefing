@@ -22,7 +22,21 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 | 场景 | 新闻简报 / 日报周报 / 研究跟踪 / 长消息汇总 |
 | 关键词 | `news briefing`, `digest`, `AI`, `policy`, `business`, `WeChat`, `Feishu`, `新闻简报`, `日报`, `周报`, `研究跟踪` |
 
-![Poster](/poster/Image.png)
+## 海报展示 / Poster Showcase
+
+三张海报依次介绍项目的差异定位、核心功能与完整操作步骤。点击图片可查看 2160 × 2880 原图。
+
+### 01 · 差异定位 / Positioning
+
+[![more-news-briefing 差异定位海报](./poster/feature-v0.1.5.png)](./poster/feature-v0.1.5.png)
+
+### 02 · 功能介绍 / Capabilities
+
+[![more-news-briefing 功能介绍海报](./poster/capabilities-v0.1.5.png)](./poster/capabilities-v0.1.5.png)
+
+### 03 · 操作步骤 / How to Use
+
+[![more-news-briefing 操作步骤海报](./poster/usage-v0.1.5.png)](./poster/usage-v0.1.5.png)
 
 ## 中文说明
 
