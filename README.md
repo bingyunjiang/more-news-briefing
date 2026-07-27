@@ -1,9 +1,16 @@
+[![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-6B46F7?logo=anthropic&logoColor=white)](https://github.com/bingyunjiang/more-news-briefing)
+[![Codex](https://img.shields.io/badge/Codex-Skill-0B1120?logo=openai&logoColor=white)](https://github.com/bingyunjiang/more-news-briefing)
+[![Hermes](https://img.shields.io/badge/Hermes-Skill-FF6B35)](https://github.com/nousresearch/hermes-skills)
+[![Platform](https://img.shields.io/badge/macOS_|_Windows_|_Linux-lightgrey)]()
+
+> **作者 / Author：** Dr. Jiang（Bingyun Jiang）　|　**微信 / WeChat：** Bingyunjiang　|　**邮箱 / Email：** bingyunjiang@qq.com　|　**GitHub：** [bingyunjiang/more-news-briefing](https://github.com/bingyunjiang/more-news-briefing)
+
 # More News Briefing
 
 一次刷尽近期热点，高效工作一整天  
 Scan the day in one pass, from headlines to chatter
 
-[![Version](https://img.shields.io/badge/version-v0.1.5-2f6feb)](#release-notes)
+[![Version](https://img.shields.io/badge/version-v0.1.6-2f6feb)](#release-notes)
 [![License](https://img.shields.io/badge/license-MIT-1f883d)](./LICENSE)
 [![Type](https://img.shields.io/badge/type-AI%20Agent%20Skill-8250df)](#项目表头)
 [![Language](https://img.shields.io/badge/language-ZH%20%7C%20EN-f59e0b)](#中文说明)
@@ -12,16 +19,31 @@ Scan the day in one pass, from headlines to chatter
 English entry: [Jump to English Overview](#english-overview)
 Promo illustration pack: [View README promo illustration pack](./assets/readme-xiaohei-scenes/README.md)
 
+快速入口：[More 系列](#more-系列索引) · [海报展示](#海报展示--poster-showcase) · [中文说明](#中文说明) · [English](#english-overview) · [版本说明](#版本说明)
+
 ## 项目表头
 
 | 字段 | 内容 |
 |---|---|
 | 名称 | `more-news-briefing` |
-| 版本 | `v0.1.5` |
+| 版本 | `v0.1.6` |
 | 类型 | AI Agent Skill / 新闻简报技能 |
 | 场景 | 新闻简报 / 日报周报 / 研究跟踪 / 长消息汇总 |
 | 本地运行 | macOS / Windows 10-11 / Linux，Python 3.10+ |
 | 关键词 | `news briefing`, `digest`, `AI`, `policy`, `business`, `WeChat`, `Feishu`, `新闻简报`, `日报`, `周报`, `研究跟踪` |
+
+## More 系列索引
+
+`more-*` 是一组强调过程透明、来源可追溯和结果可复核的 AI 工作流项目。
+
+| 项目 | 核心用途 |
+| --- | --- |
+| [more-paper-workflow](https://github.com/bingyunjiang/more-paper-workflow) | 论文定题、文献检索、证据组织、写作与引用审计 |
+| [more-sci-figure](https://github.com/bingyunjiang/more-sci-figure) | 科研图表数据提取、人工复核、论文级重绘与交付验证 |
+| **[more-news-briefing](https://github.com/bingyunjiang/more-news-briefing)**（当前项目） | 新闻与行业信息收集、去重、排序、核验和简报生成 |
+| [more-comic-digitizer](https://github.com/bingyunjiang/more-comic-digitizer) | 儿童手绘漫画数字化、审核、共创与电子出版 |
+
+系列主页：[github.com/bingyunjiang](https://github.com/bingyunjiang)
 
 ## 海报展示 / Poster Showcase
 
@@ -29,15 +51,15 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 ### 01 · 差异定位 / Positioning
 
-[![more-news-briefing 差异定位海报](./poster/feature-v0.1.5.png)](./poster/feature-v0.1.5.png)
+[![more-news-briefing 差异定位海报](./poster/feature-v0.1.6.png)](./poster/feature-v0.1.6.png)
 
 ### 02 · 功能介绍 / Capabilities
 
-[![more-news-briefing 功能介绍海报](./poster/capabilities-v0.1.5.png)](./poster/capabilities-v0.1.5.png)
+[![more-news-briefing 功能介绍海报](./poster/capabilities-v0.1.6.png)](./poster/capabilities-v0.1.6.png)
 
 ### 03 · 操作步骤 / How to Use
 
-[![more-news-briefing 操作步骤海报](./poster/usage-v0.1.5.png)](./poster/usage-v0.1.5.png)
+[![more-news-briefing 操作步骤海报](./poster/usage-v0.1.6.png)](./poster/usage-v0.1.6.png)
 
 ## 中文说明
 
@@ -218,6 +240,16 @@ py -3 -m unittest discover -s tests -v
 
 
 ## 版本说明
+
+### v0.1.6（2026-07-26）
+
+- 新增三张可编辑、可导出的 README 海报，分别说明差异定位、核心能力和完整操作步骤，并在 README 开头提供直达展示入口
+- 将海报源文件、样式、定位底稿和导出图片统一归入 `v0.1.6`，避免与 `v0.1.5` 的认知增强发布记录混淆
+- 新增 Windows 原生运行指南、PowerShell 宣传图生成脚本和 Windows 兼容性回归测试
+- 核心 runner 不再依赖 Bash 或 WSL；路径、UTF-8 输出、命令提示和可选适配器入口均按 macOS、Windows、Linux 的共享合同处理
+- 新增 macOS 与 Windows、Python 3.10 与 3.13 的 GitHub Actions 测试矩阵，覆盖语法检查、PowerShell 脚本解析和完整单元测试
+- README 开头新增作者、联系方式、Agent/平台徽章、快速入口与 More 系列项目索引
+- UI/agent 元数据版本同步升级为 `0.1.6`
 
 ### v0.1.5
 
@@ -446,6 +478,16 @@ Default delivery format:
 - complex HTML-style formatting should be avoided for chat delivery
 
 ## Release Notes
+
+### v0.1.6 (2026-07-26)
+
+- Added three editable and exportable README posters covering positioning, core capabilities, and the complete usage flow, with direct navigation near the top of the README
+- Moved the poster sources, stylesheet, positioning notes, and exported images under the `v0.1.6` release identity so they remain distinct from the `v0.1.5` cognitive-layer release
+- Added native Windows guidance, a PowerShell promo-image helper, and Windows compatibility regression coverage
+- Removed Bash and WSL as requirements for the core runner; paths, UTF-8 output, command hints, and optional adapter entry points now follow one macOS/Windows/Linux contract
+- Added a GitHub Actions matrix for macOS and Windows on Python 3.10 and 3.13, covering syntax compilation, PowerShell parsing, and the full unit test suite
+- Added author and contact information, Agent/platform badges, quick navigation, and the More project family index near the top of the README
+- Bumped UI/agent metadata to `0.1.6`
 
 ### v0.1.5
 

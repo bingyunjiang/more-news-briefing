@@ -1,4 +1,4 @@
-# more-news-briefing v0.1.5 推广定位底稿
+# more-news-briefing v0.1.6 推广定位底稿
 
 更新日期：2026-07-26
 
