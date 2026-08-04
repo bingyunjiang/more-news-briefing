@@ -9,6 +9,12 @@ description: Create recurring multi-topic news briefings with customizable caden
 
 Build a recurring news digest with an internal workflow for collection, filtering, ranking, verification, summarization, and formatting. Default to a broad briefing that covers major general-interest topics plus any user-priority themes, then adapt the scope, cadence, and output format to the request.
 
+## Standalone Boundary
+
+This skill is an independent news and industry-briefing workflow. It can mention other `more-*` projects in documentation as a catalog, but it must not treat them as prerequisites, automatic next steps, or shared runtime state.
+
+Use this skill when the user's goal is current-affairs collection, source-backed summarization, ranking, verification, digest formatting, or recurring watchlist monitoring. If a retained item later becomes material for a paper, figure, or creative project, export the briefing as a cited artifact; do not automatically enter another skill from this workflow.
+
 Before the first real retrieval pass, resolve whether this is the user's first use of the skill or the first time they are asking for a new specialty watchlist. If the topic mix is missing, vague, or only says things like `看下专项`, pause and complete the topic contract first.
 
 When the user directly invokes the skill with a short request such as `做个简报`, `跑一下`, or `按默认来`, do not silently skip customization on the first turn. Give them a compact first-use gate that makes the choices visible:

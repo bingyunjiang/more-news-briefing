@@ -36,6 +36,8 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 `more-*` 是一组强调过程透明、来源可追溯和结果可复核的 AI 工作流项目。
 
+这些项目是并列的能力目录，而不是一个强绑定流水线。`more-news-briefing` 独立完成新闻收集、去重、排序、核验和成稿；其他 `more-*` 项目只作为用户选型参考。
+
 | 项目 | 核心用途 |
 | --- | --- |
 | [more-paper-workflow](https://github.com/bingyunjiang/more-paper-workflow) | 论文定题、文献检索、证据组织、写作与引用审计 |
@@ -95,6 +97,8 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 ### 功能概览
 
 `more-news-briefing` 不只是把新闻压缩成几段话，而是把一次简报拆成可重复执行的工作流：先确认主题和交付口径，再收集候选信息，合并重复事件，按影响力排序，做证据检查，最后输出适合阅读和转发的 Markdown 简报。
+
+当任务目标是日报、周报、专题监测、行业信息汇总、长消息简报或来源支持的时事摘要时，使用本项目。论文写作、科研图表重绘和漫画数字化属于其他独立项目；新闻条目可以作为带来源素材导出，但不会在本 skill 内自动转入其他工作流。
 
 它适合三类常见任务：
 
@@ -249,6 +253,7 @@ py -3 -m unittest discover -s tests -v
 - 核心 runner 不再依赖 Bash 或 WSL；路径、UTF-8 输出、命令提示和可选适配器入口均按 macOS、Windows、Linux 的共享合同处理
 - 新增 macOS 与 Windows、Python 3.10 与 3.13 的 GitHub Actions 测试矩阵，覆盖语法检查、PowerShell 脚本解析和完整单元测试
 - README 开头新增作者、联系方式、Agent/平台徽章、快速入口与 More 系列项目索引
+- README 与 `SKILL.md` 补充独立运行边界，明确 More 系列索引只作选型参考，本 skill 不把其他 `more-*` 项目作为前置依赖或自动后续步骤
 - UI/agent 元数据版本同步升级为 `0.1.6`
 
 ### v0.1.5
@@ -487,6 +492,7 @@ Default delivery format:
 - Removed Bash and WSL as requirements for the core runner; paths, UTF-8 output, command hints, and optional adapter entry points now follow one macOS/Windows/Linux contract
 - Added a GitHub Actions matrix for macOS and Windows on Python 3.10 and 3.13, covering syntax compilation, PowerShell parsing, and the full unit test suite
 - Added author and contact information, Agent/platform badges, quick navigation, and the More project family index near the top of the README
+- Documented the standalone boundary in README and `SKILL.md`: the More project family index is for choosing the right skill, not for prerequisites, automatic follow-up workflows, or shared runtime state
 - Bumped UI/agent metadata to `0.1.6`
 
 ### v0.1.5
