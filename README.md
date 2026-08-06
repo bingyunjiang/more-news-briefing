@@ -53,7 +53,7 @@ Promo illustration pack: [View README promo illustration pack](./assets/readme-x
 
 ### 01 · 差异定位 / Positioning
 
-[![more-news-briefing 差异定位海报](./poster/feature-v0.1.6.png)](./poster/feature-v0.1.6.png)
+
 
 ### 02 · 功能介绍 / Capabilities
 
